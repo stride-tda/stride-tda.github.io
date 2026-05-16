@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations</title>
+
+    <!-- Primary SEO -->
+    <meta name="description" content="STRIDE is a scalable Training Data Attribution framework for LLMs that learns lightweight activation-space steering operators and recovers individual training-example influence via sparse linear decomposition — 13× faster than prior art at 1.38B parameters.">
+    <meta name="keywords" content="STRIDE, training data attribution, TDA, data influence, LLM, large language model, activation steering, sparse recovery, compressive sensing, Lasso, pre-training, nanochat, ClimbMix, data selection, data contamination, Rishit Dagli, Abir Harrasse, Luke Zhang, Florent Draye, Amir Abdullah, Bernhard Schölkopf, Zhijing Jin, arXiv">
+    <meta name="author" content="Rishit Dagli, Abir Harrasse, Luke Zhang, Florent Draye, Amirali Abdullah, Bernhard Schölkopf, Zhijing Jin">
+    <link rel="canonical" href="https://stride-tda.github.io/">
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph (social sharing) -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="STRIDE">
+    <meta property="og:title" content="STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations">
+    <meta property="og:description" content="STRIDE learns lightweight activation-space steering operators that mimic the behavioral shift caused by training on data subsets, then recovers individual training-example influence via sparse linear decomposition — state-of-the-art LLM pre-training attribution at 13× less compute than prior art.">
+    <meta property="og:url" content="https://stride-tda.github.io/">
+    <meta property="og:image" content="https://stride-tda.github.io/assets/teaser.png">
+    <meta property="og:image:width" content="828">
+    <meta property="og:image:height" content="532">
+    <meta property="og:image:alt" content="STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations">
+    <meta property="article:published_time" content="2026-05-01">
+    <meta property="article:author" content="Rishit Dagli">
+
+    <!-- Twitter / X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations">
+    <meta name="twitter:description" content="STRIDE learns activation-space steering operators to trace LLM predictions back to individual training examples — state-of-the-art TDA at 13× less computgtage than prior art.">
+    <meta name="twitter:image" content="https://stride-tda.github.io/assets/teaser.png">
+    <meta name="twitter:image:alt" content="STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations">
+    <meta name="twitter:creator" content="@rishit_dagli">
+
+    <!-- Scholar / citation discovery -->
+    <meta name="citation_title" content="STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations">
+    <meta name="citation_author" content="Dagli, Rishit">
+    <meta name="citation_author" content="Harrasse, Abir">
+    <meta name="citation_author" content="Zhang, Luke">
+    <meta name="citation_author" content="Draye, Florent">
+    <meta name="citation_author" content="Abdullah, Amirali">
+    <meta name="citation_author" content="Schölkopf, Bernhard">
+    <meta name="citation_author" content="Jin, Zhijing">
+    <meta name="citation_online_date" content="2026/05/01">
+    <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2506.XXXXX">
+    <meta name="citation_arxiv_id" content="2506.XXXXX">
+    <meta name="citation_abstract_html_url" content="https://stride-tda.github.io/">
+    <meta name="citation_language" content="en">
+    <meta name="citation_keywords" content="training data attribution; data influence; LLMs; activation steering; sparse recovery; compressive sensing; pre-training">
+
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ScholarlyArticle",
+      "name": "STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations",
+      "headline": "STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations",
+      "description": "STRIDE is a scalable Training Data Attribution framework for LLMs that learns lightweight activation-space steering operators and recovers individual training-example influence via sparse linear decomposition, achieving state-of-the-art LDS on LLM pre-training attribution while being 13× faster than prior art.",
+      "url": "https://stride-tda.github.io/",
+      "image": "https://stride-tda.github.io/assets/teaser.png",
+      "sameAs": ["https://arxiv.org/abs/2506.XXXXX"],
+      "publisher": {
+        "@type": "Organization",
+        "name": "arXiv",
+        "url": "https://arxiv.org"
+      },
+      "datePublished": "2026-05-01",
+      "author": [
+        {"@type": "Person", "name": "Rishit Dagli",         "url": "https://rishitdagli.com"},
+        {"@type": "Person", "name": "Abir Harrasse"},
+        {"@type": "Person", "name": "Luke Zhang"},
+        {"@type": "Person", "name": "Florent Draye"},
+        {"@type": "Person", "name": "Amirali Abdullah",  "url": "https://scholar.google.com/citations?user=jPEbq5wAAAAJ&hl=en&oi=ao"},
+        {"@type": "Person", "name": "Bernhard Schölkopf",   "url": "https://scholar.google.com/citations?user=DZ-fHPgAAAAJ&hl=en"},
+        {"@type": "Person", "name": "Zhijing Jin",           "url": "https://zhijing-jin.com"}
+      ],
+      "about": [
+        "Training Data Attribution",
+        "Large Language Models",
+        "Activation Space Steering",
+        "Sparse Recovery"
+      ],
+      "keywords": "training data attribution, TDA, data influence, LLM, activation steering, sparse recovery, compressive sensing, Lasso, pre-training, data selection, data contamination",
+      "isAccessibleForFree": true
+    }
+    </script>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%E2%9C%A8</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Material+Icons&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/pretrain-chart.css">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M9MHD7K3Z3"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-M9MHD7K3Z3');
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true,
+            formatError: function (jax, err) {
+              return jax.formatError(err);
+            }
+          },
+          options: {
+            skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+            ignoreHtmlClass: 'no-math',
+            processHtmlClass: 'tex-math'
+          },
+          chtml: {
+            scale: 0.9,
+            matchFontHeight: true,
+            fontURL: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2',
+            adaptiveCSS: true
+          }
+        };
+    </script>
+    <style>
+        :root {
+            --header-height: 74px;
+            --dark-background: #0d0d0d;
+            --text-color: #e0e0e0;
+            --heading-color: #f0f0f0;
+            --subtle-text-color: #a0a0a0;
+            --border-color: #333;
+            --accent-blue: #4FC3F7;
+            --accent-blue-glow: rgba(79, 195, 247, 0.5);
+            --accent-blue-glow-strong: rgba(79, 195, 247, 0.6);
+            --gradient-start: #4FC3F7;
+            --gradient-end: #4d90fe;
+        }
+
+        :root.light {
+            --dark-background: #f5f7fa;
+            --text-color: #1a1a2e;
+            --heading-color: #0d0d1a;
+            --subtle-text-color: #555e72;
+            --border-color: #d0d5de;
+            --accent-blue: #1a7ac7;
+            --accent-blue-glow: rgba(26, 122, 199, 0.35);
+            --accent-blue-glow-strong: rgba(26, 122, 199, 0.45);
+            --gradient-start: #1a7ac7;
+            --gradient-end: #0d5ea3;
+        }
+
+        :root.light gemini-header {
+            background-color: rgba(245, 247, 250, 0.85);
+        }
+
+        :root.light .result-card {
+            background: rgba(0,0,0,0.03);
+        }
+
+        :root.light .expandable[data-collapsed="true"]::after {
+            background: linear-gradient(to bottom, transparent, rgba(245,247,250,0.97));
+        }
+
+        :root.light .dropdown-menu {
+            background: #fff;
+        }
+
+        :root.light .dropdown-trigger,
+        :root.light .filter-group select {
+            background: rgba(0,0,0,0.04);
+        }
+
+        :root.light .search-box input {
+            background: rgba(0,0,0,0.04);
+            color: var(--text-color);
+        }
+
+        :root.light #citation pre {
+            color: var(--text-color);
+        }
+
+        :root.light .contributors-card {
+            background-color: rgba(0,0,0,0.04);
+            border-left-color: var(--accent-blue);
+        }
+
+        body {
+            font-family: 'Google Sans', sans-serif;
+            background-color: var(--dark-background);
+            color: var(--text-color);
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0px;
+        }
+
+        main {
+            padding-top: var(--header-height);
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        /* Header */
+        gemini-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+
+        ._content_l9x19_124 {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            gap: 60px;
+        }
+
+        ._logo_l9x19_75 svg {
+            height: 28px;
+            fill: #fff;
+        }
+
+        nav._links_l9x19_177 ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+            margin: 0;
+            padding: 0;
+        }
+        nav._links_l9x19_177 a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        nav._links_l9x19_177 a:hover {
+            color: #fff;
+        }
+        :root.light nav._links_l9x19_177 a:hover {
+            color: var(--accent-blue);
+        }
+
+        ._button_xe5r4_75 {
+            background: var(--accent-blue);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        ._button_xe5r4_75:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 15px var(--accent-blue-glow);
+        }
+
+        /* Spacers */
+        ._spacer_8k2eh_74 { height: 80px; }
+        .spacer-large { height: 120px; }
+        .spacer-small { height: 40px; }
+
+        /* Typography */
+        h1, h2, h3 {
+            color: var(--heading-color);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        h1 { font-size: 3.5em; line-height: 1.1; }
+        h2 { font-size: 2.8em; line-height: 1.2; }
+        h3 { font-size: 1.8em; line-height: 1.3; margin-top: 60px; }
+
+        .accent-text { color: var(--accent-blue); }
+        .gradient-text {
+            background: -webkit-linear-gradient(45deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p, .caption-left, .caption-center {
+            font-size: 1.1em;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 15px auto;
+            color: var(--subtle-text-color);
+            text-align: left;
+        }
+
+        #abstract p { text-align: justify; }
+        .text-center { text-align: center; }
+        .caption-center { text-align: center; }
+
+        /* Physics Material Fields slide menu (VoMP style) */
+        .fields-slide-menu {
+            margin: 20px 0 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            overflow: visible;
+        }
+        .fields-dots {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        #additional-fields-dots {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            max-width: calc(9 * 74px + 8 * 16px);
+            margin: 0 auto;
+        }
+        .fields-dot {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        .fields-card-img {
+            width: 56px;
+            height: 56px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2px;
+            display: block;
+            object-fit: contain;
+            transition: transform 0.3s ease, border-color 0.3s ease, width 0.3s ease, height 0.3s ease;
+        }
+        .fields-card-img:hover { transform: scale(1.15); border-color: var(--accent-blue); }
+        .fields-dot.active .fields-card-img {
+            width: 74px;
+            height: 74px;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue-glow-strong);
+        }
+        /* White background for transparent PNGs in slide card display (not thumbnails) */
+        #additional-fields-slides-container img {
+            background-color: #ffffff;
+        }
+        /* Rounded corners on all 4 sides of each card in Additional section */
+        #additional-fields-slides-container > div > div > div {
+            background: rgba(255,255,255,0.04);
+        }
+        .additional-fields-caption {
+            text-align: center;
+            margin-top: 12px;
+            font-style: italic;
+            color: var(--subtle-text-color);
+        }
+        .fields-slide-content { display: none; }
+        .fields-slide-content.active { display: block; }
+        .fields-video-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+        .fields-video-cell {
+            flex: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+        .fields-method-label {
+            text-align: center;
+            margin: 6px 0 0 0;
+            font-size: 0.78em;
+            color: var(--subtle-text-color);
+        }
+        .fields-placeholder-box {
+            width: 100%;
+            aspect-ratio: 2.4 / 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fields-placeholder-box::after {
+            content: 'Coming soon';
+            font-size: 0.7em;
+            color: var(--subtle-text-color);
+            opacity: 0.5;
+        }
+
+        /* Gallery hover-to-play overlay */
+        .gallery-video-cell {
+            position: relative;
+        }
+        .gallery-play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 56px;
+            height: 56px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+        .gallery-play-icon::after {
+            content: '';
+            display: block;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 10px 0 10px 18px;
+            border-color: transparent transparent transparent #fff;
+            margin-left: 3px;
+        }
+        .gallery-video-cell:hover .gallery-play-icon {
+            opacity: 0;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid var(--border-color);
+            margin: 40px auto;
+            width: 80%;
+        }
+
+        /* ─── Method section ───────────────────────────────────────────── */
+        .method-figure {
+            margin: 28px auto 0 auto;
+            max-width: 1060px;
+            padding: 0 12px;
+        }
+        .method-figure .figure-wrap {
+            background: #ffffff;
+            padding: 16px 18px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+        }
+        :root.light .method-figure .figure-wrap {
+            box-shadow: 0 6px 22px rgba(0,0,0,0.12);
+            border: 1px solid var(--border-color);
+        }
+        .method-figure img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+        .method-figcaption {
+            font-style: italic;
+            text-align: left;
+            font-size: 0.98em;
+            color: var(--subtle-text-color);
+            max-width: 880px;
+            margin: 18px auto 36px auto;
+            line-height: 1.6;
+        }
+        .method-figcaption strong { color: var(--text-color); font-style: normal; }
+
+        .method-block {
+            max-width: 920px;
+            margin: 0 auto 28px auto;
+            padding: 20px 22px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            transition: border-color 0.2s;
+        }
+        :root.light .method-block {
+            background: rgba(0,0,0,0.025);
+        }
+        .method-block:hover { border-color: rgba(79,195,247,0.35); }
+        .method-block h3 {
+            text-align: left;
+            font-size: 1.35em;
+            color: var(--accent-blue);
+            margin: 0 0 10px 0;
+        }
+        .method-block .method-summary {
+            margin: 0;
+            font-size: 1em;
+            line-height: 1.6;
+            color: var(--text-color);
+            text-align: left;
+        }
+
+        details.method-details {
+            margin-top: 14px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 6px;
+        }
+        details.method-details > summary {
+            list-style: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 7px 14px;
+            background: rgba(79,195,247,0.10);
+            border: 1px solid rgba(79,195,247,0.35);
+            color: var(--accent-blue);
+            border-radius: 999px;
+            font-size: 0.88em;
+            font-weight: 500;
+            user-select: none;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        details.method-details > summary::-webkit-details-marker { display: none; }
+        details.method-details > summary:hover {
+            background: rgba(79,195,247,0.16);
+            border-color: var(--accent-blue);
+        }
+        details.method-details > summary .material-icons {
+            font-size: 1.05em;
+            transition: transform 0.25s ease;
+        }
+        details.method-details[open] > summary .material-icons {
+            transform: rotate(180deg);
+        }
+        details.method-details > summary .summary-show { display: inline; }
+        details.method-details > summary .summary-hide { display: none; }
+        details.method-details[open] > summary .summary-show { display: none; }
+        details.method-details[open] > summary .summary-hide { display: inline; }
+
+        .method-details-content {
+            margin-top: 16px;
+            padding: 0 4px;
+            font-size: 0.96em;
+            line-height: 1.65;
+            color: var(--text-color);
+            animation: methodFadeIn 0.25s ease-out;
+        }
+        .method-details-content p { margin: 10px 0; text-align: left; max-width: none; color: var(--text-color); font-size: 1em; }
+        .method-details-content ul { padding-left: 22px; margin: 8px 0; }
+        .method-details-content li { margin-bottom: 8px; line-height: 1.6; }
+        .method-details-content .eq {
+            margin: 10px 0;
+            padding: 6px 10px;
+            background: rgba(79,195,247,0.05);
+            border-left: 3px solid rgba(79,195,247,0.4);
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .method-details-content strong.eq-label {
+            display: inline-block;
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        @keyframes methodFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hover tooltips for jargon (Motive-style) */
+        .term {
+            position: relative;
+            border-bottom: 1px dotted var(--accent-blue);
+            cursor: help;
+            color: var(--text-color);
+        }
+        :root.light .term { border-bottom-color: var(--accent-blue); }
+        .term > .term-tip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(4px);
+            min-width: 200px;
+            max-width: 300px;
+            width: max-content;
+            background: #1a1a1a;
+            color: var(--text-color);
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            font-size: 0.84em;
+            font-style: normal;
+            line-height: 1.45;
+            text-align: left;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+            z-index: 200;
+            white-space: normal;
+        }
+        :root.light .term > .term-tip {
+            background: #ffffff;
+            color: var(--text-color);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+        }
+        .term > .term-tip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: #1a1a1a;
+        }
+        :root.light .term > .term-tip::after { border-top-color: #ffffff; }
+        .term:hover > .term-tip,
+        .term:focus-within > .term-tip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Gallery rows — used for both video+text and video+video layouts */
+        .gallery-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 28px;
+            align-items: flex-start;
+        }
+
+        /* Sections */
+        section { padding: 0px 0; }
+        .author-row { display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; flex-wrap: wrap; }
+        .author-row .col-4 { flex: 1; max-width: 20%; text-align: center; }
+        .author-row a { color: var(--text-color); text-decoration: none; font-weight: 500; }
+        .author-row a:hover { color: var(--accent-blue); }
+        .equal-contrib { font-size: 0.8em; color: var(--subtle-text-color); text-align: center; margin-top: 5px; }
+        .affil-row { text-align: center; margin-top: 15px; color: var(--subtle-text-color); }
+        .author-row sup { font-size: 0.65em; vertical-align: super; color: var(--subtle-text-color); line-height: 0; }
+        .affiliations {
+            text-align: center;
+            margin: 14px auto 0 auto;
+            max-width: 680px;
+            font-size: 0.84em;
+            color: var(--subtle-text-color);
+            line-height: 1.7;
+        }
+        .affiliations sup {
+            font-size: 0.72em;
+            vertical-align: super;
+            line-height: 0;
+            color: var(--subtle-text-color);
+        }
+        .venue { margin-top:20px; font-style: italic; }
+
+        /* Teaser section */
+        .teaser-section {
+            width: 100%;
+            text-align: center;
+            margin: 40px 0 30px 0;
+            padding: 0;
+        }
+        .teaser-video-container {
+            width: 100%;
+            max-width: 854px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+        }
+        .teaser-video {
+            width: 100%;
+            height: auto;
+            display: block;
+            vertical-align: top;
+        }
+
+        /* Footer */
+        footer { padding: 40px 0; border-top: 1px solid var(--border-color); text-align: center; }
+        #disclaimers p { font-size: 0.8em; color: #777; text-align: center; }
+        #disclaimers a { color: #999; }
+
+        /* Contributors / Citation Section */
+        #contributors, #acknowledgments, #citation {
+            background-color: rgba(13, 13, 13, 0.95);
+            padding: 20px 0;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+        :root.light #contributors,
+        :root.light #acknowledgments,
+        :root.light #citation {
+            background-color: transparent;
+        }
+
+        .contributors-grid {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .contributors-card {
+            background-color: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-blue);
+        }
+
+        .contributors-card h3 {
+            color: var(--accent-blue);
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        #citation pre {
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            /* Header */
+            ._content_l9x19_124 { gap: 6px; flex-direction: column; align-items: flex-start; padding: 8px 12px; }
+            gemini-header { height: auto; min-height: var(--header-height); }
+            ._logo_l9x19_75 { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
+            .header-lab-names { font-size: 0.78em !important; white-space: normal !important; line-height: 1.5; }
+            nav._links_l9x19_177 ul { gap: 12px; flex-wrap: wrap; }
+            nav._links_l9x19_177 a { font-size: 0.85em; }
+            main { padding-top: 150px; padding-left: 10px; padding-right: 10px; }
+
+            /* Typography */
+            h1 { font-size: 2.2em; line-height: 1.15; }
+            h2 { font-size: 1.5em; line-height: 1.2; }
+            h3 { font-size: 1.2em; line-height: 1.3; margin-top: 36px; }
+            p, .caption-left, .caption-center { font-size: 1em; }
+
+            /* Authors */
+            .author-row { gap: 10px; }
+            .author-row .col-4 { max-width: 45%; min-width: 120px; font-size: 0.9em; }
+
+            /* Buttons */
+            ._button_xe5r4_75 { font-size: 0.85em; padding: 8px 14px; }
+
+            /* Gallery: all side-by-side rows stack vertically on mobile */
+            .gallery-video-row,
+            .gallery-row {
+                flex-direction: column !important;
+            }
+
+            /* All children of stacked rows go full width */
+            .gallery-video-row .gallery-video-cell,
+            .gallery-video-row > div,
+            .gallery-row > div,
+            .gallery-row > .gallery-video-cell {
+                flex: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Physics Material Fields */
+            .fields-video-row { flex-wrap: wrap; }
+            .fields-video-cell { flex: 1 1 calc(50% - 8px); min-width: calc(50% - 8px); }
+            .fields-card-img { width: 42px; height: 42px; }
+            .fields-dot.active .fields-card-img { width: 52px; height: 52px; }
+            .fields-dots { gap: 10px; }
+            #additional-fields-dots { gap: 10px; max-width: 100%; }
+
+            /* Method section images: stack vertically */
+            div[style*="display: flex"][style*="gap: 24px"] { flex-direction: column !important; align-items: center !important; }
+            div[style*="height: 400px"] { height: auto !important; width: 100% !important; max-width: 100% !important; }
+
+            /* Method blocks on mobile */
+            .method-block { padding: 14px 14px; margin: 0 0 18px 0; }
+            .method-block h3 { font-size: 1.1em; }
+            .method-figure { padding: 0 4px; }
+            .method-figure img { border-radius: 8px; }
+            .method-figcaption { font-size: 0.9em; }
+            .method-details-content { font-size: 0.9em; }
+            details.method-details > summary { font-size: 0.82em; padding: 6px 12px; }
+            .term > .term-tip { font-size: 0.78em; min-width: 150px; max-width: 240px; }
+
+            /* 3-image row: reduce fixed height */
+            .gallery-row img[style*="height: 260px"] { height: 180px !important; }
+
+            /* Teaser */
+            .teaser-video-container { border-radius: 10px; }
+
+            /* Contributors/Citation */
+            .contributors-grid { grid-template-columns: 1fr; }
+            #citation pre { font-size: 0.75em; }
+
+            /* Spacers - reduce on mobile */
+            ._spacer_8k2eh_74 { height: 40px; }
+            .spacer-large { height: 60px; }
+            .spacer-small { height: 20px; }
+
+            /* Additional fields image cards: stack on very small screens */
+            #additional-fields-slides-container > div > div {
+                flex-direction: column !important;
+            }
+            #additional-fields-slides-container > div > div > div {
+                flex: none !important;
+                width: 100% !important;
+            }
+        }
+
+        /* Mobile touch devices only: hide hover instructions */
+        @media (hover: none) and (pointer: coarse) and (max-width: 768px) {
+            .gallery-play-icon { display: none !important; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.3em; }
+            main { padding-top: 140px; }
+            .author-row .col-4 { max-width: 100%; min-width: 0; width: 100%; }
+            /* Stack fields videos to single column on very small screens */
+            .fields-video-cell { flex: 1 1 100%; min-width: 100%; }
+        }
+
+        /* Theme toggle */
+        #theme-toggle {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 1100;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 999px;
+            padding: 6px 12px 6px 10px;
+            font-family: inherit;
+            font-size: 0.8em;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            backdrop-filter: blur(8px);
+        }
+        #theme-toggle:hover {
+            background: rgba(79,195,247,0.12);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        :root.light #theme-toggle {
+            background: rgba(0,0,0,0.05);
+        }
+        :root.light #theme-toggle:hover {
+            background: rgba(26,122,199,0.1);
+        }
+        #theme-toggle .material-icons {
+            font-size: 1.1em;
+        }
+
+        /* ─── Gallery: Results Explorer ──────────────────────────────────────── */
+        .gallery-intro {
+            text-align: center;
+            max-width: 760px;
+            margin: 0 auto 32px auto;
+        }
+
+        .gallery-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin: 0 auto 16px auto;
+            max-width: 1100px;
+            padding: 0 8px;
+        }
+        .search-box {
+            flex: 1 1 280px;
+            position: relative;
+        }
+        .search-box .material-icons {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--subtle-text-color);
+            font-size: 1.1em;
+            pointer-events: none;
+        }
+        .search-box input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 11px 14px 11px 40px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-box input::placeholder { color: var(--subtle-text-color); }
+        .search-box input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(79,195,247,0.15);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-group select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.05) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23a0a0a0' d='M0 0l5 6 5-6z'/></svg>") no-repeat right 12px center;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 9px 32px 9px 14px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 0.88em;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-group select:hover { border-color: #555; }
+        .filter-group select:focus { border-color: var(--accent-blue); }
+        .filter-group select option {
+            background-color: #1a1a1a;
+            color: var(--text-color);
+        }
+        .filter-group select option:checked,
+        .filter-group select option:hover {
+            background-color: #262626;
+            color: var(--accent-blue);
+        }
+
+        /* Custom dropdown with logo support */
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 12px 8px 12px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 0.88em;
+            line-height: 1.2;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            min-height: 36px;
+            box-sizing: border-box;
+        }
+        .dropdown-trigger:hover { border-color: #555; }
+        .dropdown-trigger:focus,
+        .dropdown.open .dropdown-trigger { border-color: var(--accent-blue); outline: none; }
+        .dropdown-trigger-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .dropdown-trigger-label {
+            white-space: nowrap;
+        }
+        .dropdown-trigger .material-icons {
+            font-size: 1.1em;
+            color: var(--subtle-text-color);
+            margin-left: 2px;
+            transition: transform 0.2s;
+        }
+        .dropdown.open .dropdown-trigger .material-icons {
+            transform: rotate(180deg);
+        }
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 100%;
+            max-height: 320px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+            list-style: none;
+            margin: 0;
+            padding: 6px;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity 0.15s, transform 0.15s;
+            pointer-events: none;
+        }
+        .dropdown.open .dropdown-menu {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.88em;
+            color: var(--text-color);
+            white-space: nowrap;
+            transition: background-color 0.12s, color 0.12s;
+        }
+        .dropdown-option:hover,
+        .dropdown-option.focused {
+            background: rgba(79,195,247,0.1);
+        }
+        .dropdown-option.selected {
+            background: rgba(79,195,247,0.18);
+            color: var(--accent-blue);
+        }
+        .dropdown-option-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .dropdown-option-icon-placeholder {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .dropdown-menu::-webkit-scrollbar { width: 8px; }
+        .dropdown-menu::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        .dropdown-menu::-webkit-scrollbar-track { background: transparent; }
+
+        .gallery-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1100px;
+            margin: 0 auto 20px auto;
+            padding: 0 8px;
+            color: var(--subtle-text-color);
+            font-size: 0.9em;
+        }
+        .gallery-meta .clear-filters {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--subtle-text-color);
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-family: inherit;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .gallery-meta .clear-filters:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        #gallery-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 24px;
+            row-gap: 28px;
+            max-width: 1100px;
+            margin: 0 auto;
+            align-items: start;
+            grid-auto-rows: max-content;
+        }
+        @media (min-width: 900px) {
+            #gallery-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+        }
+
+        .result-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px 18px 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: border-color 0.2s;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .result-card:hover {
+            border-color: rgba(79,195,247,0.4);
+        }
+
+        .card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* Inline logos used in figure captions and the gallery intro */
+        .inline-logo {
+            display: inline-block;
+            width: 1.05em;
+            height: 1.05em;
+            vertical-align: -0.18em;
+            margin-right: 0.2em;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+        .gallery-intro .meta-line {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.92em;
+            color: var(--subtle-text-color);
+        }
+        .gallery-intro .meta-line b {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .gallery-intro .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: 0 8px;
+            white-space: nowrap;
+            color: var(--text-color);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+        .badge svg,
+        .badge .badge-logo {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+        .badge-model       { background: rgba(255,255,255,0.06); color: #ddd; border: 1px solid rgba(255,255,255,0.08); }
+        .badge-model.nanochat { color: #d9d9d9; }
+        .badge-model.olmo    { color: #ffd178; }
+        .badge-model.qwen    { color: #a89cff; }
+
+        .badge-dataset     { background: rgba(255,255,255,0.04); color: #ccc; border: 1px solid rgba(255,255,255,0.08); }
+        .badge-dataset.climbmix { color: #b6e36c; }
+        .badge-dataset.olmo-mix { color: #ffd178; }
+        .badge-dataset.saferlhf { color: #ff8c8c; }
+
+        :root.light .badge-model,
+        :root.light .badge-dataset {
+            background: #e8eaed;
+            color: #333;
+            border: 1px solid #999;
+        }
+        :root.light .badge-model.nanochat,
+        :root.light .badge-model.olmo,
+        :root.light .badge-model.qwen,
+        :root.light .badge-dataset.climbmix,
+        :root.light .badge-dataset.olmo-mix,
+        :root.light .badge-dataset.saferlhf { color: #222; }
+
+        .badge-cat {
+            background: rgba(79,195,247,0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(79,195,247,0.25);
+        }
+
+        .card-section { margin: 0; min-width: 0; }
+        .card-section h4 {
+            margin: 0 0 4px 0;
+            font-size: 0.72em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--subtle-text-color);
+            font-weight: 600;
+        }
+        .card-section .content {
+            margin: 0;
+            font-size: 0.92em;
+            line-height: 1.55;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+        .card-section.prompt .content {
+            font-weight: 500;
+            color: #fff;
+        }
+        :root.light .card-section.prompt .content {
+            color: var(--heading-color);
+        }
+        .card-section.continuation .content {
+            color: var(--text-color);
+        }
+
+        .card-section.influence-most h4    { color: #6dd47a; }
+        .card-section.influence-2nd-most h4 { color: #6dd47a; opacity: 0.75; }
+        .card-section.influence-least h4   { color: #e89aa1; }
+        .card-section.influence-2nd-least h4 { color: #e89aa1; opacity: 0.75; }
+
+        .influence-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 10px;
+        }
+        @media (min-width: 600px) {
+            .influence-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+        }
+        .influence-grid > * { min-width: 0; }
+
+        .expandable {
+            position: relative;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .expandable[data-collapsed="true"] {
+            max-height: 6.5em;
+        }
+        .expandable[data-collapsed="true"]::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: 2em;
+            background: linear-gradient(to bottom, transparent, rgba(13,13,13,0.95));
+            pointer-events: none;
+        }
+        .expandable .content { margin: 0; }
+
+        mjx-merror {
+            background: none !important;
+            border: none !important;
+            color: inherit !important;
+            box-shadow: none !important;
+        }
+        .expand-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-blue);
+            font-size: 0.82em;
+            font-family: inherit;
+            font-weight: 500;
+            padding: 4px 0 0 0;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .expand-toggle:hover { text-decoration: underline; }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--subtle-text-color);
+        }
+        .empty-state .material-icons {
+            font-size: 3em;
+            opacity: 0.4;
+            margin-bottom: 12px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin: 32px auto 0 auto;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.88em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .page-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #000;
+            font-weight: 600;
+        }
+        .page-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .page-ellipsis {
+            color: var(--subtle-text-color);
+            padding: 0 4px;
+        }
+
+        @media (max-width: 600px) {
+            .gallery-toolbar { padding: 0 4px; }
+            .filter-group { width: 100%; }
+            .filter-group select { flex: 1 1 calc(50% - 4px); font-size: 0.8em; }
+            .result-card { padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<gemini-header id="header" role="banner">
+    <div class="_content_l9x19_124">
+        <nav class="_links_l9x19_177">
+            <ul>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#abstract">Abstract</a></li>
+                <li><a href="#method">Method</a></li>
+                <li><a href="#citation">Citation</a></li>
+            </ul>
+        </nav>
+    </div>
+</gemini-header>
+
+<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
+    <span class="material-icons">light_mode</span>
+    <span id="theme-label">Light</span>
+</button>
+
+<main id="main">
+    <section>
+        <div class="container">
+            <h1 style="margin-bottom: 0.15em;"><span class="accent-text">STRIDE</span></h1>
+            <h2 style="font-size: 1.6em; font-weight: 500; color: var(--heading-color); margin-top: 0.2em; line-height: 1.3;">
+                Training Data Attribution via Sparse Recovery from Subset Perturbations
+            </h2>
+
+            <div id="authors" style="margin-top: 30px;">
+                <div class="author-row">
+                    <div class="col-4"><a href="https://rishitdagli.com" target="_blank" rel="noopener">Rishit Dagli<sup>*,1</sup></a></div>
+                    <div class="col-4"><a href="https://abirharrasse.github.io" target="_blank" rel="noopener">Abir Harrasse<sup>*,1</sup></a></div>
+                    <div class="col-4"><a href="https://lukez.ca" target="_blank" rel="noopener">Luke Zhang<sup>1</sup></a></div>
+                    <div class="col-4"><a href="https://florentdraye.github.io" target="_blank" rel="noopener">Florent Draye<sup>2</sup></a></div>
+                </div>
+                <div class="author-row">
+                    <div class="col-4"><a href="https://scholar.google.com/citations?user=jPEbq5wAAAAJ&hl=en&oi=ao" target="_blank" rel="noopener">Amirali Abdullah<sup>3,4</sup></a></div>
+                    <div class="col-4"><a href="https://scholar.google.com/citations?user=DZ-fHPgAAAAJ&hl=en" target="_blank" rel="noopener">Bernhard Sch&ouml;lkopf<sup>2,5</sup></a></div>
+                    <div class="col-4"><a href="https://zhijing-jin.com" target="_blank" rel="noopener">Zhijing Jin<sup>1,5,6</sup></a></div>
+                </div>
+                <p class="equal-contrib"><sup>*</sup> Equal contribution</p>
+                <div class="affiliations">
+                    <sup>1</sup>Jinesis AI Lab, University of Toronto &amp; Vector Institute &ensp;
+                    <sup>2</sup>Max Planck Institute for Intelligent Systems, T&uuml;bingen<br>
+                    <sup>3</sup>Thoughtworks &ensp;
+                    <sup>4</sup>Martian &ensp;
+                    <sup>5</sup>ELLIS Institute, T&uuml;bingen &ensp;
+                    <sup>6</sup>EuroSafeAI
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+
+            <div style="text-align: center; margin: 20px 0; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                <a href="#" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/pdf.svg" alt="PDF" style="height: 1em; vertical-align: middle; margin-right: 0.2em;">
+                    Read Paper
+                </a>
+                <a href="assets/supplementary.pdf" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/pdf.svg" alt="PDF" style="height: 1em; vertical-align: middle; margin-right: 0.2em;">
+                    Supplementary
+                </a>
+                <a href="#" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/github.svg" alt="GitHub" style="height: 1em; vertical-align: middle; margin-right: 0.2em;">
+                    Code
+                </a>
+                <a href="#" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                    🤗 Model/Data
+                </a>
+                <a href="#citation" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;">
+                    <span class="material-icons" style="font-size: 1em; vertical-align: middle; margin-right: 0.2em;">format_quote</span> Citation
+                </a>
+            </div>
+
+            <section id="teaser" class="teaser-section">
+                <div class="teaser-video-container">
+                    <iframe width="100%" height="auto" style="aspect-ratio: 16/9; display: block;"
+                        src="https://www.youtube-nocookie.com/embed/-0HnbUca1h4?si=qgw_mI77qg5Ybcue"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </section>
+
+            <p style="text-align: center;"><i>
+                <span style="color: var(--accent-blue);"><b>TL;DR:</b></span> STRIDE traces a model&rsquo;s predictions back to its training data in a scalable way by learning lightweight &ldquo;activation steering operators&rdquo; and uses them to recover the influence of individual training examples.
+            </i></p>
+        </div>
+    </section>
+
+    <div class="container">
+
+        <section id="gallery">
+            <div class="container" style="padding: 0;">
+                <h2>Gallery</h2>
+                <hr>
+            </div>
+
+            <p class="gallery-intro">
+                Explore <span style="color: var(--accent-blue); font-weight: 600;">STRIDE</span>&rsquo;s
+                attributions across multiple models and training datasets.
+                For each test prompt we show the model&rsquo;s continuation and the four training
+                examples STRIDE identifies as the <span style="color:#6dd47a;">most</span> and
+                <span style="color:#e89aa1;">least</span> influential.
+                <span class="meta-line">
+                    <span style="color: var(--accent-blue); font-weight: 600;">Models:</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/nanochat.svg" alt="">nanochat-1.68B (pretrain)</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/qwen.png" alt="">Qwen-2.5-32B (pretrain)</span><br>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/ai2.png" alt="">OLMo-7B (pretrain)</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/qwen.png" alt="">Qwen-2.5-0.5B (SFT)</span>
+                </span>
+                <span class="meta-line">
+                    <span style="color: var(--accent-blue); font-weight: 600;">Datasets:</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/nvidia.png" alt="">ClimbMix</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/ai2.png" alt="">OLMo-Mix</span>
+                    <span class="meta-item"><img class="inline-logo" src="assets/logos/saferlhf.svg" alt="">SafeRLHF</span>
+                </span>
+            </p>
+
+            <div class="gallery-toolbar">
+                <div class="search-box">
+                    <span class="material-icons">search</span>
+                    <input type="search" id="gallery-search" placeholder="Search prompts, continuations, training examples…" autocomplete="off">
+                </div>
+                <div class="filter-group">
+                    <div class="dropdown" id="filter-model"        data-default="All models"></div>
+                    <div class="dropdown" id="filter-dataset"      data-default="All datasets"></div>
+                    <div class="dropdown" id="filter-category"     data-default="All categories"></div>
+                    <div class="dropdown" id="filter-subcategory"  data-default="All subcategories"></div>
+                </div>
+            </div>
+
+            <div class="gallery-meta">
+                <span id="result-count">&nbsp;</span>
+                <button type="button" class="clear-filters" id="clear-filters">Clear all</button>
+            </div>
+
+            <div id="gallery-grid" class="no-math">
+                <div class="empty-state" id="gallery-loading">
+                    <div class="material-icons">hourglass_top</div>
+                    <p>Loading results&hellip;</p>
+                </div>
+            </div>
+
+            <div class="pagination" id="gallery-pagination"></div>
+
+            <h3 style="text-align: center; font-size: 1.4em; margin-top: 80px; margin-bottom: 20px; color: var(--accent-blue);">LLM Pretraining Results and Scaling Model, Data</h3>
+
+            <div class="pretrain-chart-card">
+                <p class="pretrain-chart-blurb">
+                    Linear Datamodeling Score (LDS) on
+                    <img class="inline-logo" src="assets/logos/nanochat.svg" alt="">nanochat
+                    pretrained on
+                    <img class="inline-logo" src="assets/logos/nvidia.png" alt="">Nemotron-ClimbMix,
+                    evaluated on 500 held-out queries.
+                    <span class="accent-text" style="font-weight:600;">STRIDE</span>
+                    achieves the highest LDS at every model scale, at 1.38B parameters it is 5$\times$ faster than LoGRA and 12$\times$ faster than AirRep, the best baselines.
+                </p>
+                <div class="pretrain-grid">
+                    <div class="pretrain-plot pretrain-plot-lds">
+                        <div class="pretrain-plot-title">LDS  (higher is better)</div>
+                        <svg id="pretrain-chart-lds" viewBox="0 0 560 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="LDS vs model size"></svg>
+                    </div>
+                    <div class="pretrain-plot pretrain-plot-runtime">
+                        <div class="pretrain-plot-title">Runtime  <span class="pretrain-plot-subtitle">(hours, log)</span></div>
+                        <svg id="pretrain-chart-runtime" viewBox="0 0 380 240" preserveAspectRatio="xMidYMid meet" role="img" aria-label="End-to-end runtime vs model size"></svg>
+                    </div>
+                    <div class="pretrain-plot pretrain-plot-gpu">
+                        <div class="pretrain-plot-title">Peak GPU memory  <span class="pretrain-plot-subtitle">(GiB)</span></div>
+                        <svg id="pretrain-chart-gpu" viewBox="0 0 380 240" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Peak GPU memory vs model size"></svg>
+                    </div>
+                    <div id="pretrain-tooltip" class="pretrain-tooltip"></div>
+                </div>
+                <ul id="pretrain-legend" class="pretrain-legend"></ul>
+                <p class="pretrain-chart-footer">
+                    Hover a dot for details. Click a method to hide it.
+                </p>
+            </div>
+
+            <h3 style="text-align: center; font-size: 1.4em; margin-top: 60px; margin-bottom: 20px; color: var(--accent-blue);">Vision Model Results</h3>
+        </section>
+
+        <section id="abstract">
+            <div class="container" style="padding: 0;">
+                <h2>Abstract</h2>
+                <hr>
+            </div>
+            <p>
+                Training Data Attribution (TDA) seeks to trace a model's predictions back to its training data. The gold standard for TDA relies on causal interventions, observing how a model changes when data is added or removed, but repeated retraining is computationally challenging for Large Language Models (LLMs). Consequently, most approaches approximate this effect in the parameter space using gradients. However, tracking gradients across billions of parameters is not only prohibitively expensive but relies on local approximations. In this work, we propose a shift: rather than estimating parameter changes, we model the functional effect of training data in the activation space. We introduce <span style="color: var(--accent-blue);">STRIDE</span> (<b>S</b>teering-based <b>Tr</b>aining Data <b>I</b>nfluence <b>D</b>ecomposition), a framework that formulates TDA as a sparse recovery problem in the spirit of compressive sensing. <span style="color: var(--accent-blue);">STRIDE</span> learns lightweight &ldquo;steering operators&rdquo; that mimic the behavioral shift caused by training on data subsets. By measuring how these operators perturb test predictions, we recover individual training example influences via sparse linear decomposition. <span style="color: var(--accent-blue);">STRIDE</span> achieves state-of-the-art for LLM pre-training attribution while being an order of magnitude ($13\times$) faster than previous art. We further validate its practical utility through downstream applications including data selection, data contamination, and qualitative analysis.
+            </p>
+        </section>
+
+        <section id="method">
+            <div class="container" style="padding: 0;">
+                <h2>Method</h2>
+                <hr>
+            </div>
+
+            <figure class="method-figure">
+                <div class="figure-wrap">
+                    <img src="assets/method/stride_figure_method.png"
+                         alt="Overview of STRIDE: offline operator learning followed by online sparse influence recovery.">
+                </div>
+                <figcaption class="method-figcaption">
+                    <span class="accent-text" style="font-style: normal; font-weight: 600;">STRIDE</span>
+                    attaches a shared low-rank linear operator to one intermediate layer of a
+                    <em>frozen</em> base model and, for each of many random training subsets, trains a
+                    small per-subset <em>steering vector</em> to <em>simulate the causal effect</em> of retraining
+                    the model on that subset. Once the operator and per-subset vectors are learned, any query produces
+                    a short vector of subset-level perturbation measurements in a single batched forward
+                    pass; we then <em>invert</em> these measurements with sparse linear regression to read off
+                    how much each individual training example influenced that query.
+                </figcaption>
+            </figure>
+
+            <!-- ── Subsection 1: Steering operators ───────────────────── -->
+            <div class="method-block">
+                <h3>Activation-Space Steering Operators</h3>
+                <p class="method-summary">
+                    Standard attribution would require retraining the model on every candidate
+                    subset to measure its effect. <span class="accent-text" style="font-style: normal; font-weight: 600;">STRIDE</span> replaces retraining
+                    with a behavioral simulator: a single shared basis network reads the
+                    model's intermediate activations on a query and feeds them into a tiny per-subset
+                    steering vector, which shifts the output logits by approximately as much as a
+                    model retrained on that subset would. The basis network and steering vectors are
+                    trained jointly on the frozen base model under:
+                </p>
+                <ul class="method-summary" style="list-style: none; padding-left: 0; margin-top: 8px;">
+                    <li style="margin: 6px 0;"><strong style="color: var(--accent-blue);">Fidelity.</strong>
+                        On examples inside a subset, the steered model should predict like a model retrained on that subset.</li>
+                    <li style="margin: 6px 0;"><strong style="color: var(--accent-blue);">Stability.</strong>
+                        On unrelated examples, predictions should stay close to the frozen base model so each operator isolates the effect of its own subset rather than introducing global shifts.</li>
+                    <li style="margin: 6px 0;"><strong style="color: var(--accent-blue);">Linearity.</strong>
+                        Effects from different subsets should compose additively.</li>
+                </ul>
+
+                <details class="method-details">
+                    <summary>
+                        <span class="material-icons" aria-hidden="true">expand_more</span>
+                        <span class="summary-show">Show details</span>
+                        <span class="summary-hide">Hide details</span>
+                    </summary>
+                    <div class="method-details-content">
+                        <p>
+                            Let $g_\phi$ be a frozen reference model. For input $x$, let
+                            <span class="term">$h_x$<span class="term-tip">activations at chosen layer</span></span>
+                            denote the latent features and
+                            <span class="term">$o_x$<span class="term-tip">base-model output logits</span></span>
+                            the original output logits. A shared
+                            <span class="term">$B_\psi(h_x) \in \mathbb{R}^{1 \times r}$<span class="term-tip">trainable low-rank basis</span></span>
+                            produces a low-rank snapshot that we multiply by a subset-specific
+                            <span class="term">$a_k \in \mathbb{R}^{r \times C}$<span class="term-tip">steering matrix for subset $k$</span></span>
+                            ($C$ output dimensions) to obtain the steered logits:
+                        </p>
+                        <div class="eq">
+                            \[ \tilde{o}_k(x) \;=\; o_x \;+\; B_\psi(h_x)\, a_k. \]
+                        </div>
+                        <p>The basis parameters $\psi$ and the $K$ steering matrices $A = \{a_1,\dots,a_K\}$ are trained jointly under three complementary losses:</p>
+                        <ul>
+                            <li>
+                                <strong class="eq-label">Fidelity.</strong> Drives the steered model to predict <i>better</i> on examples in
+                                <span class="term">$A_k$<span class="term-tip">the $k$-th training subset</span></span>,
+                                mimicking retraining on $A_k$:
+                                <div class="eq">
+                                    \[ \mathcal{L}_{\text{fid}}(A_k) = - \frac{1}{|A_k|} \!\!\sum_{x \in A_k} \sum_{t=1}^{T} \omega_t \log\!\Big(\sigma\!\bigl(o_{x,t} + B_\psi(h_{x,t})\, a_k\bigr)_{y_{x,t}}\Big), \]
+                                </div>
+                                with softmax $\sigma$,
+                                <span class="term">$y_{x,t}$<span class="term-tip">ground-truth next token</span></span>,
+                                and
+                                <span class="term">$\omega_t \in [0,1]$<span class="term-tip">per-token loss weight</span></span>.
+                            </li>
+                            <li>
+                                <strong class="eq-label">Stability.</strong> Penalizes shifts on a random complement
+                                <span class="term">$R_k \subset S \setminus A_k$<span class="term-tip">held-out reference batch</span></span>
+                                via KL divergence, preventing degenerate &ldquo;global&rdquo; shortcuts:
+                                <div class="eq">
+                                    \[ \mathcal{L}_{\text{stab}}(A_k, R_k) = \frac{1}{|R_k|} \!\!\sum_{x \in R_k} D_{\text{KL}}\!\bigl( \sigma(o_x) \,\|\, \sigma(o_x + B_\psi(h_x)\, a_k) \bigr). \]
+                                </div>
+                            </li>
+                            <li>
+                                <strong class="eq-label">Linearity (LDS).</strong> Encourages subset responses to compose <i>additively</i>, the property our recovery step relies on. We sketch the subset matrix as
+                                <span class="term">$\tilde{M} = M R$<span class="term-tip">Johnson&ndash;Lindenstrauss sketch</span></span>
+                                with
+                                <span class="term">$R \in \mathbb{R}^{n \times q}$<span class="term-tip">random projection matrix</span></span>,
+                                and penalize the ridge-regression residual of the implied additive datamodel:
+                                <div class="eq">
+                                    \[ \mathcal{L}_{\text{LDS}}(y, \tilde{M}) = \big\|\tilde{M}\bigl(\tilde{M}^\top \tilde{M} + \gamma I\bigr)^{-1}\tilde{M}^\top y - y\big\|_2^2. \]
+                                </div>
+                            </li>
+                        </ul>
+                        <p>
+                            Once trained, the operators act as a <i>zero-shot counterfactual simulator</i>: for any new $x$, the $K$ perturbation measurements
+                            <span class="term">$y_{x,k} = \mathrm{Loss}(o_x) - \mathrm{Loss}(\tilde{o}_k(x))$<span class="term-tip">loss change from operator $k$</span></span>
+                            are obtained in a single batched forward pass &mdash; no retraining, no gradients required.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <!-- ── Subsection 2: Sparse recovery ──────────────────────── -->
+            <div class="method-block">
+                <h3>Influence Recovery</h3>
+                <p class="method-summary">
+                    Once trained, each steering vector answers one counterfactual question:
+                    &ldquo;how would the model's loss on this query change if we had retrained on only this subset?&rdquo;
+                    Stacking the answers from all subsets gives a short measurement vector for the query,
+                    paired with a binary subset-membership matrix recording which training examples
+                    contributed to which measurement.
+                </p>
+                <p class="method-summary">
+                    <span class="accent-text" style="font-style: normal; font-weight: 600;">STRIDE</span> solves this with sparse linear regression (Lasso) on the subset-membership
+                    matrix, and constructs the subsets by randomly assigning each training example to
+                    several subsets so that the matrix forms a bipartite expander graph.
+                </p>
+
+                <details class="method-details">
+                    <summary>
+                        <span class="material-icons" aria-hidden="true">expand_more</span>
+                        <span class="summary-show">Show details</span>
+                        <span class="summary-hide">Hide details</span>
+                    </summary>
+                    <div class="method-details-content">
+                        <p>
+                            Under an additive-influence assumption, stacking the
+                            <span class="term">$K$<span class="term-tip">number of subsets</span></span>
+                            measurements yields the underdetermined linear system
+                        </p>
+                        <div class="eq">
+                            \[ y_x \;\approx\; M\, w(x), \qquad M \in \{0,1\}^{K \times n},\; K \ll n. \]
+                        </div>
+                        <p>
+                            with
+                            <span class="term">$y_x$<span class="term-tip">subset perturbation measurements</span></span>,
+                            <span class="term">$M$<span class="term-tip">binary subset-membership matrix</span></span>,
+                            and
+                            <span class="term">$w(x)$<span class="term-tip">per-example influence vector</span></span>.
+                            We resolve the ambiguity using the empirical observation that, for any single query, influence concentrates on a small fraction of training examples, and solve the Lasso problem
+                        </p>
+                        <div class="eq">
+                            \[ \hat{w}(x) \;=\; \operatorname*{arg\,min}_{w \in \mathbb{R}^n} \;\tfrac{1}{2}\,\|y_x - M w\|_2^2 \;+\; \lambda\,\|w\|_1, \]
+                        </div>
+                        <p>
+                            with
+                            <span class="term">$\lambda$<span class="term-tip">$\ell_1$ sparsity coefficient</span></span>.
+                            We build $M$ by assigning each training example to
+                            <span class="term">$d$<span class="term-tip">subsets per training example</span></span>
+                            randomly chosen subsets, so that $M$ is the adjacency matrix of a left-$d$-regular bipartite graph. With high probability this graph is a
+                            <span class="term">$(2k, \epsilon)$-expander<span class="term-tip">bipartite graph with strong neighborhood expansion</span></span>,
+                            enabling provable sparse recovery:
+                        </p>
+                        <div class="eq">
+                            <p style="margin: 0;">
+                                <strong class="eq-label">Lemma.</strong> If $M$ is the adjacency matrix of a $(2k, \epsilon)$-expander with $\epsilon < 1/6$, then any
+                                <span class="term">$k$-sparse<span class="term-tip">at most $k$ non-zero entries</span></span>
+                                $w$ is uniquely recoverable via $\ell_1$ minimization from $K = \mathcal{O}\!\bigl(k \log(n/k)\bigr)$ subset measurements.
+                            </p>
+                        </div>
+                        <p>
+                            At our largest scale, $K=1000$ measurements suffice to recover influence over $n \approx 11.4\text{M}$ training examples, matching the predicted $k\log(n/k) \approx 617$ bound for $k \approx 50$ &mdash; an order-of-magnitude reduction over gradient-based attribution.
+                        </p>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+
+    </div>
+</main>
+
+<section id="acknowledgments">
+    <div class="container">
+        <hr>
+        <h3>Acknowledgments</h3>
+        <div class="contributors-grid" style="grid-template-columns: 1fr;">
+            <div class="contributors-card" style="max-width: 100%; overflow-x: auto;">
+                <p>We thank Yaxi Hu for extensive discussions that helped shape the project in its early stages and for detailed feedback on an earlier draft of the method. We also thank Keenan Samway for his contributions to the initial literature review and for many productive discussions during the early phases of the project. We are grateful to Roger Grosse and Juhan Bae for comments on previous versions that helped identify limitations of earlier formulations and guided our iterations. We also thank the Jinesis Lab for discussion and support throughout the project.</p>
+
+                <p>This material is based in part upon work supported by the German Federal Ministry of Education and Research (BMBF): Tübingen AI Center, FKZ: 01IS18039B; by the Machine Learning Cluster of Excellence, EXC number 2064/1 – Project number 390727645; by Schmidt Sciences SAFE-AI Grant; by the Frontier Model Forum and AI Safety Fund; by Open Philanthropy; by the Cooperative AI Foundation; and by the Survival and Flourishing Fund. Resources used in preparing this research were provided, in part, by the Province of Ontario, the Government of Canada through CIFAR, and companies sponsoring the Vector Institute.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="citation">
+    <div class="container">
+        <h3>Citation</h3>
+        <div class="contributors-grid" style="grid-template-columns: 1fr;">
+            <div class="contributors-card" style="max-width: 100%; overflow-x: auto; position: relative;">
+                <button id="copy-citation-btn" title="Copy citation" style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: var(--subtle-text-color); border-radius: 6px; padding: 4px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s;">
+                    <span class="material-icons" style="font-size: 1em;">content_copy</span>
+                </button>
+<pre id="citation-text">
+@inproceedings{dagli2026stride,
+}
+</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // ─── Gallery: Results Explorer ─────────────────────────────────────────
+    (function() {
+        const PAGE_SIZE = 6;
+        const COLLAPSE_THRESHOLD = 320; // chars before we collapse a text block
+
+        const MODEL_META = {
+            'nanochat 1.68B':    { cls: 'nanochat', icon: 'assets/logos/nanochat.svg', label: 'nanochat 1.68B' },
+            'OLMo 7B':           { cls: 'olmo',     icon: 'assets/logos/ai2.png',      label: 'OLMo 7B' },
+            'Qwen 0.5B (Safe)':  { cls: 'qwen',     icon: 'assets/logos/qwen.png',     label: 'Qwen 0.5B (Safe)' },
+            'Qwen 32B':          { cls: 'qwen',     icon: 'assets/logos/qwen.png',     label: 'Qwen 32B' },
+        };
+
+        const DATASET_META = {
+            'ClimbMix': { cls: 'climbmix', icon: 'assets/logos/nvidia.png',    label: 'ClimbMix' },
+            'OLMo-Mix': { cls: 'olmo-mix', icon: 'assets/logos/ai2.png',       label: 'OLMo-Mix' },
+            'SafeRLHF': { cls: 'saferlhf', icon: 'assets/logos/saferlhf.svg',  label: 'SafeRLHF' },
+        };
+
+        // DOM
+        const $grid       = document.getElementById('gallery-grid');
+        const $loading    = document.getElementById('gallery-loading');
+        const $search     = document.getElementById('gallery-search');
+        const $count      = document.getElementById('result-count');
+        const $clear      = document.getElementById('clear-filters');
+        const $pagination = document.getElementById('gallery-pagination');
+
+        let allRows = [];
+        let filtered = [];
+        let currentPage = 1;
+
+        // ── Custom dropdown component ────────────────────────────────────
+        function createDropdown(rootEl, defaultLabel, onChange) {
+            let items = [];   // [{value, label, icon}]
+            let value = '';
+
+            rootEl.innerHTML = `
+                <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <img class="dropdown-trigger-icon" alt="" hidden>
+                    <span class="dropdown-trigger-label">${esc(defaultLabel)}</span>
+                    <span class="material-icons" aria-hidden="true">expand_more</span>
+                </button>
+                <ul class="dropdown-menu" role="listbox" tabindex="-1"></ul>
+            `;
+            const trigger = rootEl.querySelector('.dropdown-trigger');
+            const triggerIcon = rootEl.querySelector('.dropdown-trigger-icon');
+            const triggerLabel = rootEl.querySelector('.dropdown-trigger-label');
+            const menu = rootEl.querySelector('.dropdown-menu');
+
+            function renderMenu() {
+                menu.innerHTML = items.map((it, i) => {
+                    const iconHtml = it.icon
+                        ? `<img class="dropdown-option-icon" src="${esc(it.icon)}" alt="" loading="lazy">`
+                        : `<span class="dropdown-option-icon-placeholder" aria-hidden="true"></span>`;
+                    const cls = ['dropdown-option'];
+                    if (it.value === value) cls.push('selected');
+                    return `<li role="option" data-index="${i}" class="${cls.join(' ')}" aria-selected="${it.value === value}">${iconHtml}<span>${esc(it.label)}</span></li>`;
+                }).join('');
+            }
+
+            function setValue(v, silent) {
+                value = v;
+                const match = items.find(it => it.value === v);
+                if (match) {
+                    triggerLabel.textContent = match.label;
+                    if (match.icon) {
+                        triggerIcon.src = match.icon;
+                        triggerIcon.hidden = false;
+                    } else {
+                        triggerIcon.hidden = true;
+                        triggerIcon.removeAttribute('src');
+                    }
+                } else {
+                    triggerLabel.textContent = defaultLabel;
+                    triggerIcon.hidden = true;
+                    triggerIcon.removeAttribute('src');
+                }
+                renderMenu();
+                if (!silent && onChange) onChange(value);
+            }
+
+            function setItems(newItems) {
+                // newItems: [{value, label, icon?}]
+                // Always prepend an "All ..." entry (value = '')
+                items = [{ value: '', label: defaultLabel }, ...newItems];
+                // keep value if still valid, else reset
+                if (!items.some(it => it.value === value)) value = '';
+                setValue(value, true);
+            }
+
+            function open() {
+                rootEl.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+                document.addEventListener('mousedown', onDocClick);
+                document.addEventListener('keydown', onKey);
+            }
+            function close() {
+                rootEl.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+                document.removeEventListener('mousedown', onDocClick);
+                document.removeEventListener('keydown', onKey);
+                menu.querySelectorAll('.focused').forEach(el => el.classList.remove('focused'));
+            }
+            function toggle() {
+                if (rootEl.classList.contains('open')) close(); else open();
+            }
+            function onDocClick(e) {
+                if (!rootEl.contains(e.target)) close();
+            }
+            function onKey(e) {
+                const opts = Array.from(menu.querySelectorAll('.dropdown-option'));
+                if (!opts.length) return;
+                let focusedIdx = opts.findIndex(o => o.classList.contains('focused'));
+                if (focusedIdx === -1) {
+                    focusedIdx = opts.findIndex(o => o.classList.contains('selected'));
+                }
+                if (e.key === 'Escape') { close(); trigger.focus(); }
+                else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    focusedIdx = Math.min(opts.length - 1, focusedIdx + 1);
+                    setFocused(opts, focusedIdx);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    focusedIdx = Math.max(0, focusedIdx - 1);
+                    setFocused(opts, focusedIdx);
+                } else if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (focusedIdx >= 0 && opts[focusedIdx]) {
+                        opts[focusedIdx].click();
+                    }
+                }
+            }
+            function setFocused(opts, idx) {
+                opts.forEach(o => o.classList.remove('focused'));
+                if (opts[idx]) {
+                    opts[idx].classList.add('focused');
+                    opts[idx].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            trigger.addEventListener('click', toggle);
+            menu.addEventListener('click', (e) => {
+                const opt = e.target.closest('.dropdown-option');
+                if (!opt) return;
+                const idx = parseInt(opt.getAttribute('data-index'), 10);
+                if (isNaN(idx)) return;
+                setValue(items[idx].value);
+                close();
+                trigger.focus();
+            });
+
+            return {
+                get value() { return value; },
+                setValue: (v) => setValue(v),
+                setItems,
+                element: rootEl,
+            };
+        }
+
+        // Logo icon for a given filter value (model or dataset). Returns undefined for categories/subs.
+        function iconForValue(kind, value) {
+            if (kind === 'model' && MODEL_META[value])   return MODEL_META[value].icon;
+            if (kind === 'dataset' && DATASET_META[value]) return DATASET_META[value].icon;
+            return undefined;
+        }
+
+        // Create the four custom dropdowns
+        const $fModel       = createDropdown(document.getElementById('filter-model'),       'All models',       applyFilters);
+        const $fDataset     = createDropdown(document.getElementById('filter-dataset'),     'All datasets',     applyFilters);
+        const $fCategory    = createDropdown(document.getElementById('filter-category'),    'All categories',   () => { syncSubcategoryOptions(); applyFilters(); });
+        const $fSubcategory = createDropdown(document.getElementById('filter-subcategory'), 'All subcategories', applyFilters);
+
+        // Escape for safe HTML injection
+        function esc(s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        const MATH_PATTERN = new RegExp([
+            // Block / inline LaTeX delimiters with non-empty content
+            '\\\\\\([^]+?\\\\\\)',
+            '\\\\\\[[^]+?\\\\\\]',
+            '\\$\\$[^$]+?\\$\\$',
+            // Sub/superscripts using braces — almost always math syntax
+            '\\^\\{[^}]+\\}',
+            '_\\{[^}]+\\}',
+            // Common LaTeX math control sequences
+            '\\\\(?:frac|sqrt|int|sum|prod|lim|partial|infty|nabla|cdot|times|div|' +
+                'leq|geq|neq|approx|equiv|notin|forall|exists|mathbb|mathcal|mathrm|' +
+                'mathbf|mathit|mathsf|begin|end|left|right|vec|hat|bar|tilde|overline|' +
+                'underline|alpha|beta|gamma|delta|epsilon|varepsilon|zeta|eta|theta|' +
+                'vartheta|iota|kappa|lambda|mu|nu|xi|pi|varpi|rho|varrho|sigma|varsigma|' +
+                'tau|upsilon|phi|varphi|chi|psi|omega|Gamma|Delta|Theta|Lambda|Xi|Pi|' +
+                'Sigma|Upsilon|Phi|Psi|Omega)\\b'
+        ].join('|'));
+
+        function looksLikeMath(text) {
+            return !!text && MATH_PATTERN.test(text);
+        }
+
+        // Returns the class string for a `.content` element, optionally adding
+        // `tex-math` so MathJax processes it (since the gallery root is `no-math`).
+        function contentClass(text) {
+            return 'content' + (looksLikeMath(text) ? ' tex-math' : '');
+        }
+
+        function makeBadge(kind, meta) {
+            const iconHtml = meta.icon
+                ? `<img class="badge-logo" src="${esc(meta.icon)}" alt="" loading="lazy">`
+                : '';
+            return `<span class="badge badge-${kind} ${meta.cls}">${iconHtml}${esc(meta.label)}</span>`;
+        }
+
+        function expandableBlock(text) {
+            const safe = esc(text);
+            const cls = contentClass(text);
+            if (text.length <= COLLAPSE_THRESHOLD) {
+                return `<p class="${cls}">${safe}</p>`;
+            }
+            return `
+                <div class="expandable" data-collapsed="true">
+                    <p class="${cls}">${safe}</p>
+                </div>
+                <button type="button" class="expand-toggle">Show more</button>
+            `;
+        }
+
+        function renderCard(row) {
+            const model = MODEL_META[row.model] || { cls: '', icon: '', label: row.model };
+            const dataset = DATASET_META[row.dataset] || { cls: '', icon: '', label: row.dataset };
+            const catLabel = row.subcategory ? `${row.category} / ${row.subcategory}` : row.category;
+
+            return `
+                <article class="result-card" data-id="${esc(row.id)}">
+                    <header class="card-badges">
+                        ${makeBadge('model', model)}
+                        ${makeBadge('dataset', dataset)}
+                        <span class="badge badge-cat">${esc(catLabel)}</span>
+                    </header>
+
+                    <div class="card-section prompt">
+                        <h4>Prompt</h4>
+                        <p class="${contentClass(row.prompt)}">${esc(row.prompt)}</p>
+                    </div>
+
+                    <div class="card-section continuation">
+                        <h4>Model continuation</h4>
+                        ${expandableBlock(row.continuation)}
+                    </div>
+
+                    <div class="influence-grid">
+                        <div class="card-section influence-most">
+                            <h4>Most influential</h4>
+                            ${expandableBlock(row.most)}
+                        </div>
+                        <div class="card-section influence-2nd-most">
+                            <h4>2nd most influential</h4>
+                            ${expandableBlock(row.second_most)}
+                        </div>
+                        <div class="card-section influence-least">
+                            <h4>Least influential</h4>
+                            ${expandableBlock(row.least)}
+                        </div>
+                        <div class="card-section influence-2nd-least">
+                            <h4>2nd least influential</h4>
+                            ${expandableBlock(row.second_least)}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderEmpty() {
+            return `
+                <div class="empty-state">
+                    <div class="material-icons">search_off</div>
+                    <p>No results match your filters.</p>
+                </div>
+            `;
+        }
+
+        function renderPage() {
+            const total = filtered.length;
+            const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+            if (currentPage > pages) currentPage = pages;
+
+            const start = (currentPage - 1) * PAGE_SIZE;
+            const slice = filtered.slice(start, start + PAGE_SIZE);
+
+            if (slice.length === 0) {
+                $grid.innerHTML = renderEmpty();
+            } else {
+                $grid.innerHTML = slice.map(renderCard).join('');
+            }
+
+            // Count text
+            if (total === 0) {
+                $count.textContent = 'No results';
+            } else if (total === allRows.length) {
+                $count.textContent = `${total} results`;
+            } else {
+                $count.textContent = `${total} of ${allRows.length} results`;
+            }
+
+            renderPagination(pages);
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([$grid]).catch(() => {});
+            }
+        }
+
+        function renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                $pagination.innerHTML = '';
+                return;
+            }
+
+            const parts = [];
+            const btn = (label, page, opts = {}) => {
+                const cls = ['page-btn'];
+                if (opts.active) cls.push('active');
+                const disabled = opts.disabled ? 'disabled' : '';
+                return `<button type="button" class="${cls.join(' ')}" data-page="${page}" ${disabled}>${label}</button>`;
+            };
+
+            parts.push(btn('&larr; Prev', currentPage - 1, { disabled: currentPage === 1 }));
+
+            // page numbers with ellipsis if many pages
+            const showPages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+            let prev = 0;
+            for (let i = 1; i <= totalPages; i++) {
+                if (!showPages.has(i)) continue;
+                if (i - prev > 1) parts.push(`<span class="page-ellipsis">&hellip;</span>`);
+                parts.push(btn(String(i), i, { active: i === currentPage }));
+                prev = i;
+            }
+
+            parts.push(btn('Next &rarr;', currentPage + 1, { disabled: currentPage === totalPages }));
+
+            $pagination.innerHTML = parts.join('');
+        }
+
+        function applyFilters() {
+            const q = $search.value.trim().toLowerCase();
+            const fm = $fModel.value;
+            const fd = $fDataset.value;
+            const fc = $fCategory.value;
+            const fs = $fSubcategory.value;
+
+            filtered = allRows.filter(r => {
+                if (fm && r.model !== fm) return false;
+                if (fd && r.dataset !== fd) return false;
+                if (fc && r.category !== fc) return false;
+                if (fs && r.subcategory !== fs) return false;
+                if (q) {
+                    const hay = (
+                        r.prompt + ' ' + r.continuation + ' ' +
+                        r.most + ' ' + r.second_most + ' ' +
+                        r.least + ' ' + r.second_least + ' ' +
+                        r.category + ' ' + r.subcategory + ' ' +
+                        r.model + ' ' + r.dataset
+                    ).toLowerCase();
+                    if (hay.indexOf(q) === -1) return false;
+                }
+                return true;
+            });
+            currentPage = 1;
+            renderPage();
+        }
+
+        function syncSubcategoryOptions() {
+            const cat = $fCategory.value;
+            const subs = new Set();
+            allRows.forEach(r => {
+                if ((!cat || r.category === cat) && r.subcategory) subs.add(r.subcategory);
+            });
+            const items = Array.from(subs).sort().map(s => ({ value: s, label: s }));
+            $fSubcategory.setItems(items);
+        }
+
+        function populateFilters() {
+            const models = Array.from(new Set(allRows.map(r => r.model))).sort();
+            const datasets = Array.from(new Set(allRows.map(r => r.dataset))).sort();
+            const cats = Array.from(new Set(allRows.map(r => r.category))).sort();
+
+            $fModel.setItems(models.map(m => ({
+                value: m, label: m, icon: iconForValue('model', m)
+            })));
+            $fDataset.setItems(datasets.map(d => ({
+                value: d, label: d, icon: iconForValue('dataset', d)
+            })));
+            $fCategory.setItems(cats.map(c => ({ value: c, label: c })));
+            syncSubcategoryOptions();
+        }
+
+        const PINNED_IDS = [
+            'olmo-olmo-mix-2',
+            'qwen32b-climbmix-3',
+        ];
+
+        const TIER_BIG   = ['OLMo 7B', 'Qwen 32B'];
+        const TIER_SMALL = ['Qwen 0.5B (Safe)', 'nanochat 1.68B'];
+
+        // Round-robin interleave: take one row from each list in order, repeat
+        // until every list is empty. Preserves within-list ordering.
+        function interleave(lists) {
+            const queues = lists.map(l => l.slice());
+            const out = [];
+            let active = true;
+            while (active) {
+                active = false;
+                for (const q of queues) {
+                    if (q.length) {
+                        out.push(q.shift());
+                        active = true;
+                    }
+                }
+            }
+            return out;
+        }
+
+        function orderRows(rows) {
+            const byId = new Map(rows.map(r => [r.id, r]));
+            const pinnedSet = new Set(PINNED_IDS);
+            const pinned = PINNED_IDS.map(id => byId.get(id)).filter(Boolean);
+
+            // Stable sort by source-file row number within each model
+            const sortByRow = (a, b) => a.row - b.row;
+
+            const bucket = (model) => rows
+                .filter(r => r.model === model && !pinnedSet.has(r.id))
+                .sort(sortByRow);
+
+            return [
+                ...pinned,
+                ...interleave(TIER_BIG.map(bucket)),
+                ...interleave(TIER_SMALL.map(bucket)),
+            ];
+        }
+
+        function init(rows) {
+            allRows = orderRows(rows);
+            filtered = allRows.slice();
+            populateFilters();
+            renderPage();
+
+            // Search input (debounced)
+            let searchTimer;
+            $search.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(applyFilters, 120);
+            });
+
+            // Custom dropdowns dispatch their own onChange via the constructor.
+
+            $clear.addEventListener('click', () => {
+                $search.value = '';
+                $fModel.setValue('');
+                $fDataset.setValue('');
+                $fCategory.setValue('');
+                syncSubcategoryOptions();
+                $fSubcategory.setValue('');
+                applyFilters();
+            });
+
+            // Event delegation for expand/collapse and pagination
+            $grid.addEventListener('click', (e) => {
+                const t = e.target;
+                if (t.classList && t.classList.contains('expand-toggle')) {
+                    const wrap = t.previousElementSibling;
+                    if (!wrap) return;
+                    const collapsed = wrap.getAttribute('data-collapsed') === 'true';
+                    wrap.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
+                    if (!collapsed) {
+                        wrap.style.maxHeight = '';
+                    } else {
+                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
+                    }
+                    t.textContent = collapsed ? 'Show less' : 'Show more';
+                }
+            });
+
+            $pagination.addEventListener('click', (e) => {
+                const btn = e.target.closest('.page-btn');
+                if (!btn || btn.disabled) return;
+                const p = parseInt(btn.getAttribute('data-page'), 10);
+                if (!isNaN(p)) {
+                    currentPage = p;
+                    renderPage();
+                    document.getElementById('gallery').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+
+        fetch('assets/results.json')
+            .then(r => {
+                if (!r.ok) throw new Error('Failed to load results.json: ' + r.status);
+                return r.json();
+            })
+            .then(init)
+            .catch(err => {
+                console.error(err);
+                if ($grid) {
+                    $grid.innerHTML = `
+                        <div class="empty-state">
+                            <div class="material-icons">error_outline</div>
+                            <p>Couldn&rsquo;t load results. Make sure <code>assets/results.json</code> is served alongside this page.</p>
+                        </div>
+                    `;
+                }
+            });
+    })();
+
+    // ── Theme toggle ──────────────────────────────────────────────────────────
+    (function() {
+        var root   = document.documentElement;
+        var btn    = document.getElementById('theme-toggle');
+        var icon   = btn.querySelector('.material-icons');
+        var label  = document.getElementById('theme-label');
+        var LIGHT  = 'light';
+        var stored = localStorage.getItem('stride-theme');
+        if (stored === LIGHT) { root.classList.add(LIGHT); icon.textContent = 'dark_mode'; label.textContent = 'Dark'; }
+        btn.addEventListener('click', function() {
+            var isLight = root.classList.toggle(LIGHT);
+            icon.textContent  = isLight ? 'dark_mode'  : 'light_mode';
+            label.textContent = isLight ? 'Dark'        : 'Light';
+            localStorage.setItem('stride-theme', isLight ? LIGHT : 'dark');
+        });
+    })();
+
+    var copyBtn = document.getElementById('copy-citation-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('mouseenter', function() {
+            this.style.borderColor = 'var(--accent-blue)';
+            this.style.color = 'var(--accent-blue)';
+        });
+        copyBtn.addEventListener('mouseleave', function() {
+            this.style.borderColor = 'var(--border-color)';
+            this.style.color = 'var(--subtle-text-color)';
+        });
+        copyBtn.addEventListener('click', function() {
+            var text = document.getElementById('citation-text').innerText.trim();
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            copyBtn.querySelector('.material-icons').innerText = 'check';
+            setTimeout(function() {
+                copyBtn.querySelector('.material-icons').innerText = 'content_copy';
+            }, 2000);
+        });
+    }
+</script>
+<script src="assets/pretrain-chart.js"></script>
+</body>
+</html>
