@@ -91,6 +91,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%E2%9C%A8</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Material+Icons&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/pretrain-chart.css">
+    <link rel="stylesheet" href="assets/results-charts.css">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M9MHD7K3Z3"></script>
     <script>
@@ -1490,7 +1491,7 @@
 
             <div class="pagination" id="gallery-pagination"></div>
 
-            <h3 style="text-align: center; font-size: 1.4em; margin-top: 80px; margin-bottom: 20px; color: var(--accent-blue);">LLM Pretraining Results and Scaling Model, Data</h3>
+            <h3 class="results-section-heading">LLM Pretraining Results and Scaling Model, Data</h3>
 
             <div class="pretrain-chart-card">
                 <p class="pretrain-chart-blurb">
@@ -1500,7 +1501,7 @@
                     <img class="inline-logo" src="assets/logos/nvidia.png" alt="">Nemotron-ClimbMix,
                     evaluated on 500 held-out queries.
                     <span class="accent-text" style="font-weight:600;">STRIDE</span>
-                    achieves the highest LDS at every model scale, at 1.38B parameters it is 5$\times$ faster than LoGRA and 12$\times$ faster than AirRep, the best baselines.
+                    achieves the highest LDS at every model scale, at 1.38B parameters it is faster than the best baselines.
                 </p>
                 <div class="pretrain-grid">
                     <div class="pretrain-plot pretrain-plot-lds">
@@ -1523,7 +1524,121 @@
                 </p>
             </div>
 
-            <h3 style="text-align: center; font-size: 1.4em; margin-top: 60px; margin-bottom: 20px; color: var(--accent-blue);">Vision Model Results</h3>
+            <!-- ── 2. Beyond Pre-training: Supervised Fine-Tuning ───────── -->
+            <h3 class="results-section-heading">Beyond Pre-training: Influence on Instruction-Tuned Models</h3>
+
+            <div class="results-card" id="sft-card">
+                <p class="results-blurb">
+                    Linear Datamodeling Score for
+                    <img class="inline-logo" src="assets/logos/qwen.png" alt="">Qwen-2.5-0.5B
+                    fine-tuned on four instruction datasets. <span class="accent-text" style="font-weight:600;">STRIDE</span>
+                    is best on
+                    <img class="inline-logo" src="assets/logos/alpaca.png" alt="">Alpaca
+                    and
+                    <img class="inline-logo" src="assets/logos/tulu.png" alt="">Tulu,
+                    on par on
+                    <img class="inline-logo" src="assets/logos/flan.svg" alt="">FLAN
+                    and
+                    <img class="inline-logo" src="assets/logos/saferlhf.svg" alt="">SafeRLHF,
+                    and remains faster.
+                </p>
+                <div class="results-stat-row">
+                    <span class="results-chip">Best on 2 / 4 datasets</span>
+                    <span class="results-chip">Top-2 on 4 / 4</span>
+                    <span class="results-chip accent">Faster than Best Baselines</span>
+                </div>
+                <div id="sft-scorecard" class="sft-scorecard"></div>
+            </div>
+
+            <!-- ── 4. Downstream: Data Selection ────────────────────────── -->
+            <h3 class="results-section-heading">Selecting High-Quality Training Data</h3>
+
+            <div class="results-card" id="selection-card">
+                <p class="results-blurb">
+                    Each method ranks
+                    100,000 candidates per task, the top 1,000 are kept, and a fresh
+                    <img class="inline-logo" src="assets/logos/qwen.png" alt="">Qwen-2.5-0.5B
+                    is fine-tuned on the selection.
+                </p>
+                <div class="results-stat-row">
+                    <span class="results-chip">66 FLAN tasks</span>
+                    <span class="results-chip">+6.68 F1 vs. random</span>
+                    <span class="results-chip accent">Tied with best baseline, order of magnitude faster</span>
+                </div>
+                <div class="results-chart-wrap">
+                    <svg id="selection-chart" viewBox="0 0 820 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="FLAN 100K selection unigram F1"></svg>
+                </div>
+                <p class="results-footer">Hover a row for mean &plusmn; std.</p>
+            </div>
+
+            <!-- ── 5. Downstream: Memorization & Contamination ──────────── -->
+            <h3 class="results-section-heading">Auditing Memorization &amp; Data Contamination</h3>
+
+            <div class="results-card" id="contam-card">
+                <p class="results-blurb">
+                    Fine-tune
+                    <img class="inline-logo" src="assets/logos/qwen.png" alt="">Qwen-2.5-0.5B
+                    on OpenWebText with replicated MATH problems injected at known rates.
+                    LoGRA alone recalls 62.1 % of leaked replicas in score-extreme buckets; adding
+                    <span class="accent-text" style="font-weight:600;">STRIDE</span>
+                    lifts that to <b>74.2 %</b>. Unlike representation-similarity baselines, STRIDE
+                    contributes a model-dependent signal that separates memorization from lexical overlap.
+                </p>
+                <div class="results-stat-row">
+                    <span class="results-chip">+12.1 pp recall over LoGRA</span>
+                    <span class="results-chip">9 contaminated checkpoints</span>
+                    <span class="results-chip accent">p &lt; 10<sup>&minus;20</sup> per model</span>
+                </div>
+
+                <div class="contam-grid">
+                    <div class="contam-panel">
+                        <div class="results-subtitle-strong">Recall on leaked replicas</div>
+                        <svg id="contam-chart-recall" viewBox="0 0 420 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Contamination recall"></svg>
+                    </div>
+                    <div class="contam-panel">
+                        <div class="results-subtitle-strong">MATH accuracy: leaked vs. non-leaked</div>
+                        <svg id="contam-chart-gap" viewBox="0 0 420 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Memorization gap by contamination rate"></svg>
+                    </div>
+                </div>
+
+                
+            </div>
+                        <!-- ── 3. Beyond LLMs: Vision Models ────────────────────────── -->
+                        <h3 class="results-section-heading">Beyond LLMs: STRIDE on Vision Models</h3>
+
+                        <div class="results-card" id="vision-card">
+                            <p class="results-blurb">
+                                Evaluation on small supervised vision and tabular models where
+                                explicit retraining is feasible. <span class="accent-text" style="font-weight:600;">STRIDE</span>
+                                recovers training examples whose removal causally lowers the held-out probability.
+                            </p>
+                            <div class="results-stat-row">
+                                <span class="results-chip">5 dataset / model pairs</span>
+                                <span class="results-chip">Top-1 LDS on MNIST &amp; Parkinsons</span>
+                                <span class="results-chip accent">Gradient-free</span>
+                            </div>
+            
+                            <div class="vision-block">
+                                <div class="vision-block-title">
+                                    Counterfactual top-<i>k</i> probability drop
+                                    <span class="results-subtitle">(higher = more actionable attribution)</span>
+                                </div>
+                                <div id="vision-cf-grid" class="vision-cf-grid"></div>
+                            </div>
+            
+                            <div class="vision-block">
+                                <div class="vision-block-title">
+                                    LDS Spearman correlation vs. explicit retraining
+                                    <span class="results-subtitle">(higher is better)</span>
+                                </div>
+                                <div id="vision-lds-grid" class="vision-lds-grid"></div>
+                            </div>
+            
+                            <div id="vision-tooltip" class="results-tooltip"></div>
+                            <ul id="vision-legend" class="results-legend"></ul>
+                            <p class="results-footer">Hover any point or bar for details.</p>
+                        </div>
+
         </section>
 
         <section id="abstract">
@@ -2307,5 +2422,6 @@
     }
 </script>
 <script src="assets/pretrain-chart.js"></script>
+<script src="assets/results-charts.js"></script>
 </body>
 </html>
