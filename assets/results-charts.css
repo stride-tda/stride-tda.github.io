@@ -479,6 +479,7 @@
     font-size: 18px;
     text-anchor: middle;
     dominant-baseline: middle;
+    fill: var(--text-color);
 }
 .contam-dumbbell-line {
     stroke: var(--subtle-text-color);
