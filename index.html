@@ -2193,14 +2193,8 @@
 
             parts.push(btn('&larr; Prev', currentPage - 1, { disabled: currentPage === 1 }));
 
-            // page numbers with ellipsis if many pages
-            const showPages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
-            let prev = 0;
             for (let i = 1; i <= totalPages; i++) {
-                if (!showPages.has(i)) continue;
-                if (i - prev > 1) parts.push(`<span class="page-ellipsis">&hellip;</span>`);
                 parts.push(btn(String(i), i, { active: i === currentPage }));
-                prev = i;
             }
 
             parts.push(btn('Next &rarr;', currentPage + 1, { disabled: currentPage === totalPages }));
