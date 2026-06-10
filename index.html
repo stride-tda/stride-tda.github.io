@@ -13,24 +13,29 @@
 
     <!-- Robots -->
     <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
 
     <!-- Open Graph (social sharing) -->
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="STRIDE">
     <meta property="og:title" content="STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations">
-    <meta property="og:description" content="STRIDE learns lightweight activation-space steering operators that mimic the behavioral shift caused by training on data subsets, then recovers individual training-example influence via sparse linear decomposition — state-of-the-art LLM pre-training attribution at 13× less compute than prior art.">
+    <meta property="og:description" content="Trace the source of capabilities arising from LLM/other pre-training at 12× less compute than prior art.">
     <meta property="og:url" content="https://stride-tda.github.io/">
     <meta property="og:image" content="https://stride-tda.github.io/assets/teaser.png">
     <meta property="og:image:width" content="828">
     <meta property="og:image:height" content="532">
     <meta property="og:image:alt" content="STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations">
-    <meta property="article:published_time" content="2026-05-01">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image:type" content="image/png">
+    <meta property="article:published_time" content="2026-06-01">
     <meta property="article:author" content="Rishit Dagli">
 
     <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations">
-    <meta name="twitter:description" content="STRIDE learns activation-space steering operators to trace LLM predictions back to individual training examples — state-of-the-art TDA at 13× less computgtage than prior art.">
+    <meta name="twitter:description" content="Trace the source of capabilities arising from LLM/other pre-training at 12× less compute than prior art.">
     <meta name="twitter:image" content="https://stride-tda.github.io/assets/teaser.png">
     <meta name="twitter:image:alt" content="STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations">
     <meta name="twitter:creator" content="@rishit_dagli">
@@ -44,10 +49,12 @@
     <meta name="citation_author" content="Abdullah, Amirali">
     <meta name="citation_author" content="Schölkopf, Bernhard">
     <meta name="citation_author" content="Jin, Zhijing">
-    <meta name="citation_online_date" content="2026/05/01">
-    <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2506.XXXXX">
-    <meta name="citation_arxiv_id" content="2506.XXXXX">
+    <meta name="citation_publication_date" content="2026/06/01">
+    <meta name="citation_online_date" content="2026/06/01">
+    <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2606.05165">
+    <meta name="citation_arxiv_id" content="2606.05165">
     <meta name="citation_abstract_html_url" content="https://stride-tda.github.io/">
+    <meta name="citation_fulltext_world_readable" content="">
     <meta name="citation_language" content="en">
     <meta name="citation_keywords" content="training data attribution; data influence; LLMs; activation steering; sparse recovery; compressive sensing; pre-training">
 
@@ -61,13 +68,13 @@
       "description": "STRIDE is a scalable Training Data Attribution framework for LLMs that learns lightweight activation-space steering operators and recovers individual training-example influence via sparse linear decomposition, achieving state-of-the-art LDS on LLM pre-training attribution while being 13× faster than prior art.",
       "url": "https://stride-tda.github.io/",
       "image": "https://stride-tda.github.io/assets/teaser.png",
-      "sameAs": ["https://arxiv.org/abs/2506.XXXXX"],
+      "sameAs": ["https://arxiv.org/abs/2606.05165"],
       "publisher": {
         "@type": "Organization",
         "name": "arXiv",
         "url": "https://arxiv.org"
       },
-      "datePublished": "2026-05-01",
+      "datePublished": "2026-06-01",
       "author": [
         {"@type": "Person", "name": "Rishit Dagli",         "url": "https://rishitdagli.com"},
         {"@type": "Person", "name": "Abir Harrasse"},
@@ -85,6 +92,20 @@
       ],
       "keywords": "training data attribution, TDA, data influence, LLM, activation steering, sparse recovery, compressive sensing, Lasso, pre-training, data selection, data contamination",
       "isAccessibleForFree": true
+    }
+    </script>
+
+    <!-- Schema.org: explainer video -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "STRIDE — Training Data Attribution via Sparse Recovery from Subset Perturbations",
+      "description": "STRIDE traces a model's predictions back to its training data by learning lightweight activation-space steering operators, then recovering the influence of individual training examples via sparse linear decomposition.",
+      "thumbnailUrl": ["https://i.ytimg.com/vi/GRkSrcA_xBk/hqdefault.jpg"],
+      "uploadDate": "2026-06-01",
+      "contentUrl": "https://www.youtube.com/watch?v=GRkSrcA_xBk",
+      "embedUrl": "https://www.youtube-nocookie.com/embed/GRkSrcA_xBk"
     }
     </script>
 
@@ -1647,7 +1668,7 @@
                 <hr>
             </div>
             <p>
-                Training Data Attribution (TDA) seeks to trace a model's predictions back to its training data. The gold standard for TDA relies on causal interventions, observing how a model changes when data is added or removed, but repeated retraining is computationally challenging for Large Language Models (LLMs). Consequently, most approaches approximate this effect in the parameter space using gradients. However, tracking gradients across billions of parameters is not only prohibitively expensive but relies on local approximations. In this work, we propose a shift: rather than estimating parameter changes, we model the functional effect of training data in the activation space. We introduce <span style="color: var(--accent-blue);">STRIDE</span> (<b>S</b>teering-based <b>Tr</b>aining Data <b>I</b>nfluence <b>D</b>ecomposition), a framework that formulates TDA as a sparse recovery problem in the spirit of compressive sensing. <span style="color: var(--accent-blue);">STRIDE</span> learns lightweight &ldquo;steering operators&rdquo; that mimic the behavioral shift caused by training on data subsets. By measuring how these operators perturb test predictions, we recover individual training example influences via sparse linear decomposition. <span style="color: var(--accent-blue);">STRIDE</span> achieves state-of-the-art for LLM pre-training attribution while being an order of magnitude ($13\times$) faster than previous art. We further validate its practical utility through downstream applications including data selection, data contamination, and qualitative analysis.
+                Training Data Attribution (TDA) seeks to trace a model's predictions back to its training data. The gold standard for TDA relies on causal interventions, observing how a model changes when data is added or removed, but repeated retraining is computationally challenging for Large Language Models (LLMs). Consequently, most approaches approximate this effect in the parameter space using gradients. However, tracking gradients across billions of parameters is not only prohibitively expensive but relies on local approximations. In this work, we propose a shift: rather than estimating parameter changes, we model the functional effect of training data in the activation space. We introduce <span style="color: var(--accent-blue);">STRIDE</span> (<b>S</b>teering-based <b>Tr</b>aining Data <b>I</b>nfluence <b>D</b>ecomposition), a framework that formulates TDA as a sparse recovery problem in the spirit of compressive sensing. <span style="color: var(--accent-blue);">STRIDE</span> learns lightweight &ldquo;steering operators&rdquo; that mimic the behavioral shift caused by training on data subsets. By measuring how these operators perturb test predictions, we recover individual training example influences via sparse linear decomposition. <span style="color: var(--accent-blue);">STRIDE</span> achieves state-of-the-art for LLM pre-training attribution while being an order of magnitude ($12\times$) faster than previous art. We further validate its practical utility through downstream applications including data selection, data contamination, and qualitative analysis.
             </p>
         </section>
 

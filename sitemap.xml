@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://stride-tda.github.io/</loc>
+    <lastmod>2026-06-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://stride-tda.github.io/assets/teaser.png</image:loc>
+      <image:title>STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://stride-tda.github.io/assets/method/stride_figure_method.png</image:loc>
+      <image:title>Overview of STRIDE: offline operator learning followed by online sparse influence recovery</image:title>
+    </image:image>
+  </url>
+</urlset>
