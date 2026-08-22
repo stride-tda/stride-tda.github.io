@@ -720,7 +720,7 @@
         #disclaimers a { color: #999; }
 
         /* Contributors / Citation Section */
-        #contributors, #acknowledgments, #citation {
+        #contributors, #acknowledgments, #paper, #citation {
             background-color: rgba(13, 13, 13, 0.95);
             padding: 20px 0;
             padding-left: 5px;
@@ -728,6 +728,7 @@
         }
         :root.light #contributors,
         :root.light #acknowledgments,
+        :root.light #paper,
         :root.light #citation {
             background-color: transparent;
         }
@@ -761,6 +762,49 @@
             color: var(--text-color);
             line-height: 1.6;
             margin: 0;
+        }
+
+        #paper .paper-preview-section {
+            display: grid;
+            grid-template-columns: minmax(180px, 0.9fr) 1.4fr;
+            gap: 28px;
+            align-items: center;
+        }
+        #paper .paper-preview-section img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            background: #fff;
+        }
+        #paper .paper-preview-meta h4 {
+            margin: 0 0 8px 0;
+            color: var(--text-color);
+            font-size: 1.15em;
+        }
+        #paper .paper-preview-authors {
+            color: var(--subtle-text-color);
+            margin: 0 0 6px 0;
+        }
+        #paper .paper-preview-affil {
+            color: #888;
+            font-style: italic;
+            margin: 0 0 14px 0;
+        }
+        #paper .paper-preview-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.95em;
+        }
+        #paper .paper-preview-links a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        @media (max-width: 768px) {
+            #paper .paper-preview-section { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
@@ -1374,6 +1418,7 @@
                 <li><a href="#gallery">Gallery</a></li>
                 <li><a href="#abstract">Abstract</a></li>
                 <li><a href="#method">Method</a></li>
+                <li><a href="#paper">Paper</a></li>
                 <li><a href="#citation">Citation</a></li>
             </ul>
         </nav>
@@ -1861,6 +1906,29 @@
                 <p>We thank Yaxi Hu for extensive discussions that helped shape the project in its early stages and for detailed feedback on an earlier draft of the method. We also thank Keenan Samway for his contributions to the initial literature review and for many productive discussions during the early phases of the project. We are grateful to Roger Grosse and Juhan Bae for comments on previous versions that helped identify limitations of earlier formulations and guided our iterations. We also thank the Jinesis Lab for discussion and support throughout the project.</p>
 
                 <p>This material is based in part upon work supported by the German Federal Ministry of Education and Research (BMBF): Tübingen AI Center, FKZ: 01IS18039B; by the Machine Learning Cluster of Excellence, EXC number 2064/1 – Project number 390727645; by Schmidt Sciences SAFE-AI Grant; by the Frontier Model Forum and AI Safety Fund; by Open Philanthropy; by the Cooperative AI Foundation; and by the Survival and Flourishing Fund. Resources used in preparing this research were provided, in part, by the Province of Ontario, the Government of Canada through CIFAR, and companies sponsoring the Vector Institute.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="paper">
+    <div class="container">
+        <hr>
+        <h3>Paper</h3>
+        <div class="contributors-grid" style="grid-template-columns: 1fr;">
+            <div class="contributors-card paper-preview-section" style="max-width: 100%;">
+                <img src="assets/paper_preview.png" alt="STRIDE paper thumbnail">
+                <div class="paper-preview-meta">
+                    <h4>STRIDE: Training Data Attribution via Sparse Recovery from Subset Perturbations</h4>
+                    <p class="paper-preview-authors"><strong>Rishit Dagli</strong>, <strong>Abir Harrasse</strong>, <strong>Luke Zhang</strong>, <strong>Florent Draye</strong>, <strong>Amirali Abdullah</strong>, <strong>Bernhard Schölkopf</strong>, <strong>Zhijing Jin</strong></p>
+                    <p class="paper-preview-affil">Jinesis AI Lab, University of Toronto &amp; Vector Institute; Max Planck Institute for Intelligent Systems; Thoughtworks; Martian; ELLIS Institute; EuroSafeAI</p>
+                    <div class="paper-preview-links">
+                        <a href="https://arxiv.org/pdf/2606.05165" target="_blank" rel="noopener noreferrer"><span class="material-icons" style="font-size: 1em;">picture_as_pdf</span> Paper</a>
+                        <a href="https://arxiv.org/abs/2606.05165" target="_blank" rel="noopener noreferrer"><span class="material-icons" style="font-size: 1em;">article</span> arXiv version</a>
+                        <a href="#citation"><span class="material-icons" style="font-size: 1em;">format_quote</span> BibTeX</a>
+                        <a href="assets/supplementary.pdf" target="_blank" rel="noopener noreferrer"><span class="material-icons" style="font-size: 1em;">description</span> Supplementary</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
