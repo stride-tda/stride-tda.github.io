@@ -1269,7 +1269,7 @@
         }
 
         .card-section { margin: 0; min-width: 0; }
-        .card-section h4 {
+        .card-section h3 {
             margin: 0 0 4px 0;
             font-size: 0.72em;
             text-transform: uppercase;
@@ -1993,14 +1993,15 @@
         function createDropdown(rootEl, defaultLabel, onChange) {
             let items = [];   // [{value, label, icon}]
             let value = '';
+            const menuId = `${rootEl.id}-menu`;
 
             rootEl.innerHTML = `
-                <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="${menuId}">
                     <img class="dropdown-trigger-icon" alt="" hidden>
                     <span class="dropdown-trigger-label">${esc(defaultLabel)}</span>
                     <span class="material-icons" aria-hidden="true">expand_more</span>
                 </button>
-                <ul class="dropdown-menu" role="listbox" tabindex="-1"></ul>
+                <ul class="dropdown-menu" id="${menuId}" role="listbox" aria-label="${esc(defaultLabel)} filter" tabindex="-1"></ul>
             `;
             const trigger = rootEl.querySelector('.dropdown-trigger');
             const triggerIcon = rootEl.querySelector('.dropdown-trigger-icon');
@@ -2203,30 +2204,30 @@
                     </header>
 
                     <div class="card-section prompt">
-                        <h4>Prompt</h4>
+                        <h3>Prompt</h3>
                         <p class="${contentClass(row.prompt)}">${esc(row.prompt)}</p>
                     </div>
 
                     <div class="card-section continuation">
-                        <h4>Model continuation</h4>
+                        <h3>Model continuation</h3>
                         ${expandableBlock(row.continuation)}
                     </div>
 
                     <div class="influence-grid">
                         <div class="card-section influence-most">
-                            <h4>Most influential</h4>
+                            <h3>Most influential</h3>
                             ${expandableBlock(row.most)}
                         </div>
                         <div class="card-section influence-2nd-most">
-                            <h4>2nd most influential</h4>
+                            <h3>2nd most influential</h3>
                             ${expandableBlock(row.second_most)}
                         </div>
                         <div class="card-section influence-least">
-                            <h4>Least influential</h4>
+                            <h3>Least influential</h3>
                             ${expandableBlock(row.least)}
                         </div>
                         <div class="card-section influence-2nd-least">
-                            <h4>2nd least influential</h4>
+                            <h3>2nd least influential</h3>
                             ${expandableBlock(row.second_least)}
                         </div>
                     </div>
