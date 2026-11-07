@@ -907,42 +907,6 @@
             .fields-video-cell { flex: 1 1 100%; min-width: 100%; }
         }
 
-        /* Theme toggle */
-        #theme-toggle {
-            position: fixed;
-            top: 18px;
-            right: 18px;
-            z-index: 1100;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 999px;
-            padding: 6px 12px 6px 10px;
-            font-family: inherit;
-            font-size: 0.8em;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background 0.2s, border-color 0.2s, color 0.2s;
-            backdrop-filter: blur(8px);
-        }
-        #theme-toggle:hover {
-            background: rgba(79,195,247,0.12);
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-        }
-        :root.light #theme-toggle {
-            background: rgba(0,0,0,0.05);
-        }
-        :root.light #theme-toggle:hover {
-            background: rgba(26,122,199,0.1);
-        }
-        #theme-toggle .material-icons {
-            font-size: 1.1em;
-        }
-
         /* ─── Gallery: Results Explorer ──────────────────────────────────────── */
         .gallery-intro {
             text-align: center;
@@ -1329,6 +1293,7 @@
             pointer-events: none;
         }
         .expandable .content { margin: 0; }
+        .expandable[data-collapsed="false"] { cursor: pointer; }
 
         mjx-merror {
             background: none !important;
@@ -1425,11 +1390,6 @@
     </div>
 </gemini-header>
 
-<button id="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
-    <span class="material-icons">light_mode</span>
-    <span id="theme-label">Light</span>
-</button>
-
 <main id="main">
     <section>
         <div class="container">
@@ -1441,23 +1401,23 @@
             <div id="authors" style="margin-top: 30px;">
                 <div class="author-row">
                     <div class="col-4"><a href="https://rishitdagli.com" target="_blank" rel="noopener">Rishit Dagli<sup>*</sup></a></div>
-                    <div class="col-4"><a href="https://abirharrasse.github.io" target="_blank" rel="noopener">Abir Harrasse<sup>1,*</sup></a></div>
-                    <div class="col-4"><a href="https://ca.linkedin.com/in/luke-zhang123" target="_blank" rel="noopener">Luke Zhang<sup>1</sup></a></div>
-                    <div class="col-4"><a href="https://florentdraye.github.io" target="_blank" rel="noopener">Florent Draye<sup>2</sup></a></div>
+                    <div class="col-4"><a href="https://abirharrasse.github.io" target="_blank" rel="noopener">Abir Harrasse<sup>*</sup></a></div>
+                    <div class="col-4"><a href="https://ca.linkedin.com/in/luke-zhang123" target="_blank" rel="noopener">Luke Zhang</a></div>
+                    <div class="col-4"><a href="https://florentdraye.github.io" target="_blank" rel="noopener">Florent Draye</a></div>
                 </div>
                 <div class="author-row">
-                    <div class="col-4"><a href="https://amirali-abdullah.github.io/" target="_blank" rel="noopener">Amirali Abdullah<sup>3,4</sup></a></div>
-                    <div class="col-4"><a href="https://scholar.google.com/citations?user=DZ-fHPgAAAAJ&hl=en" target="_blank" rel="noopener">Bernhard Sch&ouml;lkopf<sup>2,5</sup></a></div>
-                    <div class="col-4"><a href="https://zhijing-jin.com" target="_blank" rel="noopener">Zhijing Jin<sup>1,6</sup></a></div>
+                    <div class="col-4"><a href="https://amirali-abdullah.github.io/" target="_blank" rel="noopener">Amirali Abdullah</a></div>
+                    <div class="col-4"><a href="https://scholar.google.com/citations?user=DZ-fHPgAAAAJ&hl=en" target="_blank" rel="noopener">Bernhard Sch&ouml;lkopf</a></div>
+                    <div class="col-4"><a href="https://zhijing-jin.com" target="_blank" rel="noopener">Zhijing Jin</a></div>
                 </div>
                 <p class="equal-contrib"><sup>*</sup> Equal contribution</p>
                 <div class="affiliations">
-                    <sup>1</sup>Jinesis AI Lab, University of Toronto &amp; Vector Institute &ensp;
-                    <sup>2</sup>Max Planck Institute for Intelligent Systems, T&uuml;bingen<br>
-                    <sup>3</sup>Thoughtworks &ensp;
-                    <sup>4</sup>Martian &ensp;
-                    <sup>5</sup>ELLIS Institute, T&uuml;bingen &ensp;
-                    <sup>6</sup>EuroSafeAI
+                    Jinesis AI Lab, University of Toronto &amp; Vector Institute &ensp;
+                    Max Planck Institute for Intelligent Systems, T&uuml;bingen<br>
+                    Thoughtworks &ensp;
+                    Martian &ensp;
+                    ELLIS Institute, T&uuml;bingen &ensp;
+                    EuroSafeAI
                 </div>
             </div>
         </div>
@@ -2423,19 +2383,27 @@
             });
 
             // Event delegation for expand/collapse and pagination
+            function setExpanded(wrap, expand) {
+                if (!wrap) return;
+                wrap.setAttribute('data-collapsed', expand ? 'false' : 'true');
+                wrap.style.maxHeight = expand ? (wrap.scrollHeight + 'px') : '';
+                const btn = wrap.nextElementSibling;
+                if (btn && btn.classList.contains('expand-toggle')) {
+                    btn.textContent = expand ? 'Show less' : 'Show more';
+                }
+            }
+
             $grid.addEventListener('click', (e) => {
                 const t = e.target;
                 if (t.classList && t.classList.contains('expand-toggle')) {
                     const wrap = t.previousElementSibling;
                     if (!wrap) return;
-                    const collapsed = wrap.getAttribute('data-collapsed') === 'true';
-                    wrap.setAttribute('data-collapsed', collapsed ? 'false' : 'true');
-                    if (!collapsed) {
-                        wrap.style.maxHeight = '';
-                    } else {
-                        wrap.style.maxHeight = wrap.scrollHeight + 'px';
-                    }
-                    t.textContent = collapsed ? 'Show less' : 'Show more';
+                    setExpanded(wrap, wrap.getAttribute('data-collapsed') === 'true');
+                    return;
+                }
+                const wrap = t.closest && t.closest('.expandable');
+                if (wrap && wrap.getAttribute('data-collapsed') === 'false') {
+                    setExpanded(wrap, false);
                 }
             });
 
@@ -2468,23 +2436,6 @@
                     `;
                 }
             });
-    })();
-
-    // ── Theme toggle ──────────────────────────────────────────────────────────
-    (function() {
-        var root   = document.documentElement;
-        var btn    = document.getElementById('theme-toggle');
-        var icon   = btn.querySelector('.material-icons');
-        var label  = document.getElementById('theme-label');
-        var LIGHT  = 'light';
-        var stored = localStorage.getItem('stride-theme');
-        if (stored === LIGHT) { root.classList.add(LIGHT); icon.textContent = 'dark_mode'; label.textContent = 'Dark'; }
-        btn.addEventListener('click', function() {
-            var isLight = root.classList.toggle(LIGHT);
-            icon.textContent  = isLight ? 'dark_mode'  : 'light_mode';
-            label.textContent = isLight ? 'Dark'        : 'Light';
-            localStorage.setItem('stride-theme', isLight ? LIGHT : 'dark');
-        });
     })();
 
     var copyBtn = document.getElementById('copy-citation-btn');
