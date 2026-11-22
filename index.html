@@ -293,6 +293,15 @@
             color: #000;
             box-shadow: 0 0 15px var(--accent-blue-glow);
         }
+        ._button_xe5r4_75[aria-disabled="true"],
+        ._button_xe5r4_75[aria-disabled="true"]:hover {
+            background: var(--border-color);
+            color: var(--subtle-text-color);
+            box-shadow: none;
+            cursor: default;
+            opacity: 0.6;
+            filter: grayscale(1);
+        }
 
         /* Spacers */
         ._spacer_8k2eh_74 { height: 80px; }
@@ -1375,6 +1384,17 @@
             .filter-group select { flex: 1 1 calc(50% - 4px); font-size: 0.8em; }
             .result-card { padding: 14px; }
         }
+
+        /* Touch / narrow screens: tap targets at least 44px tall */
+        @media (max-width: 768px), (pointer: coarse) {
+            nav._links_l9x19_177 a { display: inline-flex; align-items: center; min-height: 44px; }
+            .author-row { row-gap: 0; }
+            .author-row a { display: inline-block; box-sizing: border-box; min-height: 44px; padding: 12px 4px; }
+            .expand-toggle { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px 0 0; }
+            .page-btn { min-width: 44px; height: 44px; }
+            .dropdown-trigger { min-height: 44px; }
+            .dropdown-option { min-height: 44px; box-sizing: border-box; }
+        }
     </style>
 </head>
 <body>
@@ -1436,11 +1456,11 @@
                     <img src="assets/pdf.svg" alt="PDF" style="height: 1em; vertical-align: middle; margin-right: 0.2em;">
                     Supplementary
                 </a>
-                <a href="#" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                <a class="_button_xe5r4_75" role="link" aria-disabled="true" style="display: inline-block; text-decoration: none;">
                     <img src="assets/github.svg" alt="GitHub" style="height: 1em; vertical-align: middle; margin-right: 0.2em;">
                     Code
                 </a>
-                <a href="#" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;" target="_blank" rel="noopener noreferrer">
+                <a class="_button_xe5r4_75" role="link" aria-disabled="true" style="display: inline-block; text-decoration: none;">
                     🤗 Model/Data
                 </a>
                 <a href="#citation" class="_button_xe5r4_75" style="display: inline-block; text-decoration: none;">

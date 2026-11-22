@@ -73,20 +73,76 @@
         return node;
     }
 
-    function attachTooltip($tip, $svg, getHtml) {
-        function show(evt, payload) {
-            const html = getHtml(payload);
-            if (!html) return;
-            $tip.innerHTML = html;
-            const wrap = $svg.parentElement.getBoundingClientRect();
-            const x = evt.clientX - wrap.left;
-            const y = evt.clientY - wrap.top;
-            $tip.style.left = x + 'px';
-            $tip.style.top  = y + 'px';
+    // Chart tooltips: mouse hover, plus touch/pen taps. Marks are only a few
+    // pixels across on phones, so a tap picks the nearest visible mark within
+    // TAP_RADIUS px; tapping anywhere else dismisses the tooltip.
+    const TAP_RADIUS = 24;
+    const tipHtml = new WeakMap();
+    const tapAreas = [];
+
+    // Positions $tip (relative to $wrap) at a client point, nudged so it
+    // stays inside the viewport on narrow screens.
+    function placeTip($tip, $wrap, clientX, clientY) {
+        const wrap = $wrap.getBoundingClientRect();
+        const vw = document.documentElement.clientWidth;
+        $tip.style.left = '0px';
+        const half = $tip.offsetWidth / 2 + 4;
+        const x = half * 2 < vw ? Math.min(Math.max(clientX, half), vw - half) : clientX;
+        $tip.style.left = (x - wrap.left) + 'px';
+        $tip.style.top  = (clientY - wrap.top)  + 'px';
+    }
+
+    function bindTip(node, $tip, $wrap, getHtml) {
+        tipHtml.set(node, getHtml);
+        node.addEventListener('pointerenter', (evt) => {
+            if (evt.pointerType !== 'mouse') return;
+            $tip.innerHTML = getHtml();
+            placeTip($tip, $wrap, evt.clientX, evt.clientY);
             $tip.classList.add('show');
+        });
+        node.addEventListener('pointermove', (evt) => {
+            if (evt.pointerType === 'mouse') placeTip($tip, $wrap, evt.clientX, evt.clientY);
+        });
+        node.addEventListener('pointerleave', (evt) => {
+            if (evt.pointerType === 'mouse') $tip.classList.remove('show');
+        });
+    }
+
+    function enableTap($area, selector, $tip, $wrap) {
+        tapAreas.push({ $area, $tip });
+        $area.addEventListener('pointerup', (evt) => {
+            if (evt.pointerType === 'mouse') return;
+            let best = null, bestD = TAP_RADIUS;
+            $area.querySelectorAll(selector).forEach((node) => {
+                if (!tipHtml.has(node) || node.closest('.hidden')) return;
+                const r = node.getBoundingClientRect();
+                const d = Math.hypot(
+                    Math.max(r.left - evt.clientX, 0, evt.clientX - r.right),
+                    Math.max(r.top - evt.clientY, 0, evt.clientY - r.bottom));
+                if (d <= bestD) { best = node; bestD = d; }
+            });
+            if (!best) { $tip.classList.remove('show'); return; }
+            const r = best.getBoundingClientRect();
+            $tip.innerHTML = tipHtml.get(best)();
+            placeTip($tip, $wrap, r.left + r.width / 2, r.top);
+            $tip.classList.add('show');
+        });
+    }
+
+    document.addEventListener('pointerdown', (evt) => {
+        if (evt.pointerType === 'mouse') return;
+        tapAreas.forEach(({ $area, $tip }) => {
+            if (!$area.contains(evt.target)) $tip.classList.remove('show');
+        });
+    });
+
+    function cardTooltip($card) {
+        let $tip = $card.querySelector('.results-tooltip');
+        if (!$tip) {
+            $tip = hel('div', { className: 'results-tooltip' });
+            $card.appendChild($tip);
         }
-        function hide() { $tip.classList.remove('show'); }
-        return { show, hide };
+        return $tip;
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -314,19 +370,9 @@
         const hiddenMethods = new Set();
         const seriesGroups  = { cf: {}, lds: {} };
 
-        // Tooltip helper.
-        const tip = attachTooltip($tip, $cfGrid.parentElement.querySelector('svg, div')
-            || $cfGrid, () => '');
-        // Override tip helper to bind to the card container so coordinates are correct.
         const $card = $cfGrid.closest('.results-card');
-        function showTip(evt, html) {
-            $tip.innerHTML = html;
-            const wrap = $card.getBoundingClientRect();
-            $tip.style.left = (evt.clientX - wrap.left) + 'px';
-            $tip.style.top  = (evt.clientY - wrap.top)  + 'px';
-            $tip.classList.add('show');
-        }
-        function hideTip() { $tip.classList.remove('show'); }
+        enableTap($cfGrid, '.vision-series-dot', $tip, $card);
+        enableTap($ldsGrid, '.vision-series-bar', $tip, $card);
 
         // ── CF panels: log x, line+marker, one panel per dataset.
         const W = 220, H = 150;
@@ -423,20 +469,12 @@
                         style: `color: ${color};`,
                     });
                     const v = CF[ds][m.name][i];
-                    dot.addEventListener('mouseenter', (evt) => {
-                        showTip(evt, `
-                            <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${m.name}</div>
-                            <div class="rtt-row"><span>${ds}</span></div>
-                            <div class="rtt-row"><span>top-k</span><b>${K_LABELS[i]}</b></div>
-                            <div class="rtt-row"><span>Mean prob. drop</span><b>${fmt4(v)}</b></div>
-                        `);
-                    });
-                    dot.addEventListener('mousemove', (evt) => {
-                        const wrap = $card.getBoundingClientRect();
-                        $tip.style.left = (evt.clientX - wrap.left) + 'px';
-                        $tip.style.top  = (evt.clientY - wrap.top)  + 'px';
-                    });
-                    dot.addEventListener('mouseleave', hideTip);
+                    bindTip(dot, $tip, $card, () => `
+                        <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${m.name}</div>
+                        <div class="rtt-row"><span>${ds}</span></div>
+                        <div class="rtt-row"><span>top-k</span><b>${K_LABELS[i]}</b></div>
+                        <div class="rtt-row"><span>Mean prob. drop</span><b>${fmt4(v)}</b></div>
+                    `);
                     g.appendChild(dot);
                 });
                 svg.appendChild(g);
@@ -515,19 +553,11 @@
                     class: 'vision-series-bar' + (m.ours ? ' ours' : ''),
                     style: `color: ${color};`,
                 });
-                rect.addEventListener('mouseenter', (evt) => {
-                    showTip(evt, `
-                        <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${m.name}</div>
-                        <div class="rtt-row"><span>${ds}</span></div>
-                        <div class="rtt-row"><span>LDS Spearman</span><b>${fmt4(v)}</b></div>
-                    `);
-                });
-                rect.addEventListener('mousemove', (evt) => {
-                    const wrap = $card.getBoundingClientRect();
-                    $tip.style.left = (evt.clientX - wrap.left) + 'px';
-                    $tip.style.top  = (evt.clientY - wrap.top)  + 'px';
-                });
-                rect.addEventListener('mouseleave', hideTip);
+                bindTip(rect, $tip, $card, () => `
+                    <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${m.name}</div>
+                    <div class="rtt-row"><span>${ds}</span></div>
+                    <div class="rtt-row"><span>LDS Spearman</span><b>${fmt4(v)}</b></div>
+                `);
                 g.appendChild(rect);
 
                 // method label below bar.
@@ -597,6 +627,9 @@
         const yScale = (i) => PAD.t + (i + 0.5) * (H - PAD.t - PAD.b) / ROWS.length;
 
         $svg.innerHTML = '';
+        const $card = $svg.closest('.results-card');
+        const $tip = cardTooltip($card);
+        enableTap($svg, '.selection-dot', $tip, $card);
 
         // grid + ticks  ("52" dropped: leaves clean space for the right-margin
         // "order of magnitude faster" callout pill).
@@ -662,38 +695,12 @@
                 fill: color, class: 'selection-dot' + (r.ours ? ' ours' : ''),
                 style: `color: ${color};`,
             });
-            dot.addEventListener('mouseenter', (evt) => {
-                const card = $svg.closest('.results-card');
-                const wrap = card.getBoundingClientRect();
-                let tip = card.querySelector('.results-tooltip');
-                if (!tip) {
-                    tip = document.createElement('div');
-                    tip.className = 'results-tooltip';
-                    card.appendChild(tip);
-                }
-                tip.innerHTML = `
-                    <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${r.name}</div>
-                    <div class="rtt-row"><span>Unigram F1</span><b>${r.v.toFixed(2)}</b></div>
-                    <div class="rtt-row"><span>Std. dev.</span><b>&plusmn;${r.std.toFixed(2)}</b></div>
-                    <div class="rtt-row"><span>vs. random</span><b>+${(r.v - baseline).toFixed(2)}</b></div>
-                `;
-                tip.style.left = (evt.clientX - wrap.left) + 'px';
-                tip.style.top  = (evt.clientY - wrap.top)  + 'px';
-                tip.classList.add('show');
-            });
-            dot.addEventListener('mousemove', (evt) => {
-                const card = $svg.closest('.results-card');
-                const wrap = card.getBoundingClientRect();
-                const tip = card.querySelector('.results-tooltip');
-                if (tip) {
-                    tip.style.left = (evt.clientX - wrap.left) + 'px';
-                    tip.style.top  = (evt.clientY - wrap.top)  + 'px';
-                }
-            });
-            dot.addEventListener('mouseleave', () => {
-                const tip = $svg.closest('.results-card').querySelector('.results-tooltip');
-                if (tip) tip.classList.remove('show');
-            });
+            bindTip(dot, $tip, $card, () => `
+                <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${r.name}</div>
+                <div class="rtt-row"><span>Unigram F1</span><b>${r.v.toFixed(2)}</b></div>
+                <div class="rtt-row"><span>Std. dev.</span><b>&plusmn;${r.std.toFixed(2)}</b></div>
+                <div class="rtt-row"><span>vs. random</span><b>+${(r.v - baseline).toFixed(2)}</b></div>
+            `);
             $svg.appendChild(dot);
 
             // numeric label to the right of dot
@@ -736,6 +743,10 @@
         const $svgR = document.getElementById('contam-chart-recall');
         const $svgG = document.getElementById('contam-chart-gap');
         if (!$svgR || !$svgG) return;
+        const $card = $svgR.closest('.results-card');
+        const $tip = cardTooltip($card);
+        enableTap($svgR, '.contam-bar', $tip, $card);
+        enableTap($svgG, '.contam-dumbbell-dot', $tip, $card);
 
         // ── Left panel: staircase bars for recall.
         const BARS = [
@@ -778,27 +789,37 @@
                 const yTop = yScale(b.v);
                 const yBot = yScale(0);
                 const x = xc - bw / 2;
+                const barHtml = () => `
+                    <div class="rtt-method"><span class="rtt-swatch" style="background:${b.color}"></span>${b.label}</div>
+                    <div class="rtt-row"><span>Recall</span><b>${b.v.toFixed(1)}%</b></div>
+                    ${b.ours ? `<div class="rtt-row"><span>vs. LoGRA</span><b>+${(b.v - BARS[1].v).toFixed(1)} pp</b></div>` : ''}
+                `;
+                const addBar = (attrs) => {
+                    const rect = el('rect', attrs);
+                    bindTip(rect, $tip, $card, barHtml);
+                    $svgR.appendChild(rect);
+                };
 
                 // The +12.1pp segment on the third bar is rendered as a brighter
                 // overlay so the delta has its own visual weight.
                 if (b.ours) {
                     const split = yScale(BARS[1].v);
-                    $svgR.appendChild(el('rect', {
+                    addBar({
                         x, y: split, width: bw, height: yBot - split,
                         fill: b.color, opacity: 0.55, rx: 3, ry: 3,
                         class: 'contam-bar',
-                    }));
-                    $svgR.appendChild(el('rect', {
+                    });
+                    addBar({
                         x, y: yTop, width: bw, height: split - yTop,
                         fill: b.color, opacity: 1, rx: 3, ry: 3,
                         class: 'contam-bar',
-                    }));
+                    });
                 } else {
-                    $svgR.appendChild(el('rect', {
+                    addBar({
                         x, y: yTop, width: bw, height: yBot - yTop,
                         fill: b.color, opacity: b.label === 'Random' ? 0.55 : 0.85,
                         rx: 3, ry: 3, class: 'contam-bar',
-                    }));
+                    });
                 }
 
                 // value above bar
@@ -919,13 +940,22 @@
                     stroke: ACCENT, opacity: 0.45 + i * 0.15,
                 }));
 
+                const dotHtml = (label, color, v) => () => `
+                    <div class="rtt-method"><span class="rtt-swatch" style="background:${color}"></span>${label}</div>
+                    <div class="rtt-row"><span>Leak rate</span><b>${r.rate}</b></div>
+                    <div class="rtt-row"><span>MATH accuracy</span><b>${v.toFixed(1)}%</b></div>
+                    <div class="rtt-row"><span>Gap</span><b>${(r.leaked - r.clean).toFixed(1)} pp</b></div>
+                `;
+
                 // clean dot (muted)
-                $svgG.appendChild(el('circle', {
+                const cleanDot = el('circle', {
                     cx: xC, cy: y, r: 6,
                     fill: '#888',
                     class: 'contam-dumbbell-dot',
                     style: 'color: #888;',
-                }));
+                });
+                bindTip(cleanDot, $tip, $card, dotHtml('Non-leaked problems', '#888', r.clean));
+                $svgG.appendChild(cleanDot);
                 $svgG.appendChild(el('text', {
                     x: xC, y: y - 12,
                     'text-anchor': 'middle',
@@ -933,12 +963,14 @@
                 }, r.clean.toFixed(1) + '%'));
 
                 // leaked dot (accent)
-                $svgG.appendChild(el('circle', {
+                const leakedDot = el('circle', {
                     cx: xL, cy: y, r: 8,
                     fill: ACCENT,
                     class: 'contam-dumbbell-dot',
                     style: `color: ${ACCENT};`,
-                }));
+                });
+                bindTip(leakedDot, $tip, $card, dotHtml('Leaked problems', ACCENT, r.leaked));
+                $svgG.appendChild(leakedDot);
                 $svgG.appendChild(el('text', {
                     x: xL, y: y - 14,
                     'text-anchor': 'middle',

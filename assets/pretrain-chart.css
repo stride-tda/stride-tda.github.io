@@ -239,3 +239,7 @@
     .pretrain-plot-runtime{ grid-row: 2; grid-column: 1; }
     .pretrain-plot-gpu    { grid-row: 3; grid-column: 1; }
 }
+
+@media (max-width: 768px), (pointer: coarse) {
+    .pretrain-legend li { min-height: 44px; box-sizing: border-box; }
+}

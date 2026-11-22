@@ -192,9 +192,13 @@
     border: 1px solid var(--border-color);
     border-radius: 999px;
     font-size: 0.82em;
+    cursor: pointer;
     user-select: none;
+    transition: opacity 0.18s, border-color 0.18s;
 }
 :root.light .results-legend li { background: rgba(0,0,0,0.04); }
+.results-legend li:hover { border-color: rgba(79,195,247,0.5); }
+.results-legend li.hidden { opacity: 0.35; text-decoration: line-through; }
 .results-legend li.ours {
     border-color: rgba(79,195,247,0.45);
     background: rgba(79,195,247,0.08);
@@ -542,4 +546,8 @@
     .vision-panel-title { font-size: 0.68em; min-height: 2.6em; }
 
     .contam-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px), (pointer: coarse) {
+    .results-legend li { min-height: 44px; box-sizing: border-box; }
 }

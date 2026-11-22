@@ -416,10 +416,14 @@
 
         const rect = target.getBoundingClientRect();
         const wrapRect = $grid.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2 - wrapRect.left;
-        const cy = rect.top - wrapRect.top;
-        $tip.style.left = cx + 'px';
-        $tip.style.top  = cy + 'px';
+        // Keep the tooltip inside the viewport on narrow screens.
+        const vw = document.documentElement.clientWidth;
+        $tip.style.left = '0px';
+        const half = $tip.offsetWidth / 2 + 4;
+        let x = rect.left + rect.width / 2;
+        if (half * 2 < vw) x = Math.min(Math.max(x, half), vw - half);
+        $tip.style.left = (x - wrapRect.left) + 'px';
+        $tip.style.top  = (rect.top - wrapRect.top) + 'px';
         $tip.classList.add('show');
 
         Object.entries(seriesGroups).forEach(([name, entries]) => {
@@ -443,22 +447,41 @@
         });
     }
 
+    // Touch/pen taps pick the nearest visible bubble within TAP_RADIUS px,
+    // since bubbles are only a few pixels across on phones.
+    const TAP_RADIUS = 24;
+    function nearestBubble($svg, x, y) {
+        let best = null, bestD = TAP_RADIUS;
+        $svg.querySelectorAll('.pretrain-series:not(.hidden) .pretrain-series-bubble').forEach((c) => {
+            const r = c.getBoundingClientRect();
+            const d = Math.hypot(
+                Math.max(r.left - x, 0, x - r.right),
+                Math.max(r.top - y, 0, y - r.bottom));
+            if (d <= bestD) { best = c; bestD = d; }
+        });
+        return best;
+    }
+
     [$svgLds, $svgRuntime, $svgGpu].forEach(($svg) => {
-        $svg.addEventListener('mouseover', (e) => {
+        $svg.addEventListener('pointerover', (e) => {
+            if (e.pointerType !== 'mouse') return;
             const t = e.target;
             if (t.dataset && t.dataset.method) showTip(t);
         });
-        $svg.addEventListener('mouseout', (e) => {
+        $svg.addEventListener('pointerout', (e) => {
+            if (e.pointerType !== 'mouse') return;
             const t = e.target;
             if (t.dataset && t.dataset.method) hideTip();
         });
-        $svg.addEventListener('click', (e) => {
-            const t = e.target;
-            if (t.dataset && t.dataset.method) {
-                showTip(t);
-                setTimeout(hideTip, 2500);
-            }
+        $svg.addEventListener('pointerup', (e) => {
+            if (e.pointerType === 'mouse') return;
+            const t = nearestBubble($svg, e.clientX, e.clientY);
+            hideTip();
+            if (t) showTip(t);
         });
+    });
+    document.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse' && !$grid.contains(e.target)) hideTip();
     });
 
     // ── Legend ───────────────────────────────────────────────────────────
@@ -479,7 +502,8 @@
             }
             li.classList.toggle('hidden', hide);
         });
-        li.addEventListener('mouseenter', () => {
+        li.addEventListener('pointerenter', (e) => {
+            if (e.pointerType !== 'mouse') return;
             Object.entries(seriesGroups).forEach(([name, entries]) => {
                 ['lds', 'runtime', 'gpu'].forEach(k => {
                     const g = entries[k];
@@ -489,7 +513,8 @@
                 });
             });
         });
-        li.addEventListener('mouseleave', () => {
+        li.addEventListener('pointerleave', (e) => {
+            if (e.pointerType !== 'mouse') return;
             Object.values(seriesGroups).forEach(entries => {
                 ['lds', 'runtime', 'gpu'].forEach(k => {
                     const g = entries[k];
